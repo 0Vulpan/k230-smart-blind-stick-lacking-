@@ -1,0 +1,4678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智能盲杖管理系统</title>
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=E4805d16520de693a3fe707cdc962045"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a0533 0%, #4a1f6e 25%, #2d5a7b 50%, #764ba2 75%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .background-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.15;
+            animation: floatAround 20s ease-in-out infinite;
+        }
+
+        .bg-circle:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+            top: -150px;
+            right: -150px;
+            animation-delay: 0s;
+            filter: blur(60px);
+        }
+
+        .bg-circle:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #4ecdc4, #44bd9e);
+            bottom: 10%;
+            left: -100px;
+            animation-delay: -5s;
+            filter: blur(50px);
+        }
+
+        .bg-circle:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            top: 40%;
+            right: 5%;
+            animation-delay: -10s;
+            filter: blur(40px);
+        }
+
+        .bg-circle:nth-child(4) {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            bottom: 30%;
+            left: 30%;
+            animation-delay: -15s;
+            filter: blur(35px);
+        }
+
+        @keyframes floatAround {
+            0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            25% { transform: translate(30px, 30px) rotate(5deg) scale(1.05); }
+            50% { transform: translate(-20px, 40px) rotate(-5deg) scale(0.95); }
+            75% { transform: translate(25px, -30px) rotate(3deg) scale(1.02); }
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: particleFloat 15s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes particleFloat {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 152, 219, 0.9) 50%, rgba(155, 89, 182, 0.9) 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+            animation: shimmer 6s ease-in-out infinite;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71, #3498db, #9b59b6, #e74c3c);
+            background-size: 200% 100%;
+            animation: rainbowLine 3s linear infinite;
+        }
+
+        @keyframes rainbowLine {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(10%, 10%) rotate(2deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .header-icon {
+            font-size: 60px;
+            animation: headerBounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.5));
+        }
+
+        @keyframes headerBounce {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        .header h1 {
+            font-size: 32px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            letter-spacing: 3px;
+        }
+
+        .header p {
+            font-size: 15px;
+            opacity: 0.95;
+            margin-top: 8px;
+            letter-spacing: 2px;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(90deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98), rgba(26, 26, 46, 0.98));
+            flex-wrap: wrap;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 16px 24px;
+            display: block;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .nav a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71, #3498db, #9b59b6);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav a:hover::before {
+            width: 100%;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-4px);
+            text-shadow: 0 0 15px rgba(255,255,255,0.8);
+        }
+
+        .nav a .nav-icon {
+            font-size: 20px;
+            margin-right: 6px;
+        }
+
+        .nav-logout {
+            margin-left: auto;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+        }
+
+        .nav-logout:hover {
+            background: linear-gradient(135deg, rgba(192, 57, 43, 0.9), rgba(231, 76, 60, 0.9));
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 15px;
+            display: none;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page h2 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-left: 5px solid;
+            border-image: linear-gradient(180deg, #3498db, #9b59b6) 1;
+            padding-left: 15px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+
+        .page h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(52,152,219,0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
+        .card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 18px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #2ecc71, #f39c12, #e74c3c);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card:hover {
+            box-shadow: 0 12px 35px rgba(0,0,0,0.18);
+            transform: translateY(-6px);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .feature-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f0f4f8 100%);
+            padding: 18px 15px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(52,152,219,0.15) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: rotate(45deg) translate(15%, 15%);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            border-color: rgba(52,152,219,0.3);
+        }
+
+        .feature-icon {
+            font-size: 60px;
+            margin-bottom: 18px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 20px;
+        }
+
+        .feature-card p {
+            color: #7f8c8d;
+            font-size: 15px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: bold;
+            font-size: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px) scale(1.06);
+            box-shadow: 0 12px 30px rgba(52,152,219,0.5);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 6px 20px rgba(231,76,60,0.4);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 12px 30px rgba(231,76,60,0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 6px 20px rgba(46,204,113,0.4);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 12px 30px rgba(46,204,113,0.5);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            box-shadow: 0 6px 20px rgba(243,156,18,0.4);
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 12px 30px rgba(243,156,18,0.5);
+        }
+
+        .log-box {
+            height: 280px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ecf0f1;
+            padding: 18px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 2;
+            box-shadow: inset 0 3px 15px rgba(0,0,0,0.4);
+        }
+
+        .log-box::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .log-box::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        .log-box::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3498db, #9b59b6);
+            border-radius: 5px;
+        }
+
+        .login-container {
+            max-width: 500px;
+            margin: 100px auto;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 45px;
+            border-radius: 30px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.35);
+            animation: loginSlideIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102,126,234,0.15) 0%, rgba(255,255,255,0) 70%);
+            animation: loginShimmer 6s ease-in-out infinite;
+        }
+
+        @keyframes loginShimmer {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(8%, 8%) rotate(3deg); }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-icon {
+            font-size: 85px;
+            margin-bottom: 20px;
+            display: block;
+            animation: bounce 2.5s ease-in-out infinite;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.2));
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            font-size: 30px;
+            position: relative;
+            z-index: 2;
+            letter-spacing: 3px;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #34495e;
+            font-size: 16px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 14px;
+            font-size: 17px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 5px rgba(102,126,234,0.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(102,126,234,0.5);
+            position: relative;
+            z-index: 2;
+            letter-spacing: 3px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(102,126,234,0.6);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 18px;
+            font-weight: bold;
+            animation: shake 0.5s ease;
+        }
+
+        .mic-btn {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mic-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.5);
+        }
+
+        .mic-btn.active {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            animation: pulse 1s infinite;
+        }
+
+        .mic-guide-btn {
+            padding: 12px 25px;
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mic-guide-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes loginSlideIn {
+            from { opacity: 0; transform: translateY(-80px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .contact-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 22px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 14px;
+            margin-bottom: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .contact-item:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            transform: translateX(8px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .contact-avatar {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        }
+
+        .map-container {
+            position: relative;
+            height: 500px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d5e8ed 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        #baiduMap {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.6);
+        }
+
+        .map-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(52,152,219,0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(52,152,219,0.15) 1px, transparent 1px);
+            background-size: 50px 50px;
+            display: none;
+        }
+
+        .trajectory-path {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .waypoint {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: #3498db;
+            border-radius: 50%;
+            z-index: 3;
+            box-shadow: 0 3px 15px rgba(52,152,219,0.6);
+            animation: waypointPulse 2s ease-in-out infinite;
+        }
+
+        .waypoint.start {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            animation-delay: 0s;
+        }
+
+        .waypoint.end {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            animation-delay: 0.5s;
+        }
+
+        @keyframes waypointPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border-radius: 22px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-indicator.warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .status-indicator.danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: white;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* 加载动画 */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .device-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        .device-status-card {
+            background: linear-gradient(145deg, #fff 0%, #f8f9fa 100%);
+            padding: 22px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .device-status-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+        }
+
+        .device-status-icon {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .device-status-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .device-status-label {
+            color: #7f8c8d;
+            font-size: 15px;
+            margin-top: 6px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+        }
+
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .input-with-btn {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .input-with-btn input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .input-with-btn input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52,152,219,0.12);
+        }
+
+        .setting-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .setting-section {
+            background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .setting-section:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+
+        .setting-section h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 58px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ccc;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        .warn-display {
+            background: linear-gradient(135deg, #f0fff4 0%, #e8f8f0 100%);
+            padding: 35px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid #c8e6c9;
+        }
+
+        .warn-icon {
+            font-size: 90px;
+            margin-bottom: 18px;
+        }
+
+        .warn-text {
+            font-size: 20px;
+            color: #2c3e50;
+        }
+
+        .sos-area {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            border: 3px solid #ffcdd2;
+        }
+
+        .sos-icon {
+            font-size: 120px;
+            margin-bottom: 25px;
+            animation: sosPulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, rgba(52,152,219,0.12) 0%, rgba(155,89,182,0.12) 100%);
+            padding: 20px 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            border: 2px solid rgba(52,152,219,0.1);
+        }
+
+        .hero-icon {
+            font-size: 70px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+        }
+
+        .hero-text h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .hero-text p {
+            color: #7f8c8d;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .setting-grid {
+                grid-template-columns: 1fr;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .nav a {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            .login-container {
+                margin: 50px 20px;
+                padding: 35px 25px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .nav {
+                flex-wrap: wrap;
+                gap: 5px;
+                padding: 10px;
+            }
+            .nav a {
+                padding: 10px 12px;
+                font-size: 13px;
+                border: none;
+                background: rgba(255,255,255,0.1);
+                border-radius: 10px;
+                flex: 1 1 calc(33.33% - 10px);
+                text-align: center;
+            }
+            .nav a:nth-child(3n) {
+                flex: 0 0 auto;
+            }
+            .nav-logout {
+                flex: 1 1 100%;
+                background: rgba(231,76,60,0.2);
+                margin-top: 5px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .header p {
+                font-size: 12px;
+            }
+            .header {
+                padding: 12px 15px;
+            }
+            .container {
+                padding: 10px;
+            }
+            .page {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+            .mic-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            .login-container {
+                margin: 20px 10px;
+                padding: 25px 15px;
+            }
+            .login-container h2 {
+                font-size: 22px;
+            }
+            .form-group input {
+                padding: 14px;
+                font-size: 16px;
+            }
+            .floating-voice-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 28px;
+                bottom: 20px;
+                right: 20px;
+            }
+            .floating-voice-btn.active {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+            }
+            .voice-hint {
+                font-size: 16px;
+                padding: 12px 20px;
+            }
+            .page h2 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            .card {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .feature-card {
+                padding: 15px;
+            }
+            .feature-card h3 {
+                font-size: 14px;
+            }
+            .feature-card p {
+                font-size: 12px;
+            }
+            .hero-section {
+                display: none;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .sos-area {
+                padding: 20px 10px;
+            }
+            .sos-icon {
+                font-size: 50px;
+            }
+            .btn {
+                padding: 12px 18px;
+                font-size: 15px;
+            }
+            .device-status-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .setting-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .setting-section {
+                padding: 15px;
+            }
+            .map-container {
+                height: 250px;
+            }
+            .contact-item {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .log-box {
+                max-height: 150px;
+                font-size: 12px;
+            }
+        }
+
+        .floating-voice-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 8px 30px rgba(102,126,234,0.6);
+            transition: all 0.3s ease;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .floating-voice-btn.show {
+            display: flex;
+        }
+
+        .floating-voice-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(102,126,234,0.8);
+        }
+
+        .floating-voice-btn.active {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            animation: voicePulse 1.5s infinite;
+        }
+
+        @keyframes voicePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 8px 30px rgba(231,76,60,0.6); }
+            50% { transform: scale(1.15); box-shadow: 0 12px 50px rgba(231,76,60,0.9); }
+        }
+
+        .voice-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 35px;
+            border-radius: 20px;
+            font-size: 20px;
+            z-index: 1001;
+            display: none;
+            animation: hintFade 0.5s ease;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .voice-hint.show {
+            display: block;
+        }
+
+        @keyframes hintFade {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .voice-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none;
+        }
+
+        .voice-overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-decoration">
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+    </div>
+
+    <div class="particles" id="particles"></div>
+    <div class="stars" id="stars"></div>
+
+    <div id="loginPage" class="login-container">
+        <div class="login-header">
+            <span class="login-icon">🦯</span>
+        </div>
+        <h2>智能盲杖系统</h2>
+        <div class="form-group">
+            <label>用户名</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="username" placeholder="请说用户名">
+                <button class="mic-btn" onclick="startVoiceInput('username', 'mic-login-user')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="password" id="password" placeholder="请说密码">
+                <button class="mic-btn" onclick="startVoiceInput('password', 'mic-login-pwd')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <button class="login-btn" onclick="login()">登 录</button>
+        <div style="text-align: center; margin-top: 12px; font-size: 13px; position: relative; z-index: 2;">
+            <a href="#" onclick="showRegister(); guideRegister(); return false;" style="color: #667eea; text-decoration: none;">注册</a>
+            <span style="color: #ccc; margin: 0 10px;">|</span>
+            <a href="#" onclick="showForgotPassword(); return false;" style="color: #667eea; text-decoration: none;">忘记密码</a>
+        </div>
+        <div id="loginError" class="error-message" style="display: none;"></div>
+    </div>
+
+    <div id="registerPage" class="login-container" style="display: none;">
+        <div class="login-header">
+            <span class="login-icon">🦯</span>
+        </div>
+        <h2>创建新账号</h2>
+        <div class="form-group">
+            <label>用户名</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="regUsername" placeholder="请输入用户名（3-16位）">
+                <button class="mic-btn" onclick="startVoiceInput('regUsername', 'mic-reg-user')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>设置密码</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="password" id="regPassword" placeholder="请输入密码（6位以上）">
+                <button class="mic-btn" onclick="startVoiceInput('regPassword', 'mic-reg-pwd')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>确认密码</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="password" id="regPassword2" placeholder="请再次输入密码">
+                <button class="mic-btn" onclick="startVoiceInput('regPassword2', 'mic-reg-pwd2')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <button class="login-btn" onclick="register()">注 册</button>
+        <div style="text-align: center; margin-top: 15px; position: relative; z-index: 2;">
+            <a href="#" onclick="showLogin(); return false;" style="color: #667eea; text-decoration: none;">已有账号？返回登录</a>
+        </div>
+        <div id="registerError" class="error-message" style="display: none;"></div>
+    </div>
+
+    <div id="forgotPage" class="login-container" style="display: none;">
+        <div class="login-header">
+            <span class="login-icon">🔑</span>
+        </div>
+        <h2>找回密码</h2>
+        <div class="form-group">
+            <label>用户名</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="forgotUsername" placeholder="请输入用户名">
+                <button class="mic-btn" onclick="startVoiceInput('forgotUsername', 'mic-forgot-user')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>新密码</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="password" id="forgotPassword" placeholder="请输入新密码（6位以上）">
+                <button class="mic-btn" onclick="startVoiceInput('forgotPassword', 'mic-forgot-pwd')" title="语音输入">🎤</button>
+            </div>
+        </div>
+        <button class="login-btn" onclick="resetPassword()">重置密码</button>
+        <div style="text-align: center; margin-top: 15px; position: relative; z-index: 2;">
+            <a href="#" onclick="showLogin(); return false;" style="color: #667eea; text-decoration: none;">返回登录</a>
+        </div>
+        <div id="forgotError" class="error-message" style="display: none;"></div>
+    </div>
+
+    <div class="voice-overlay" id="voiceOverlay"></div>
+    <div class="voice-hint" id="voiceHint">🎤 请说话...</div>
+    <button class="floating-voice-btn show" id="floatingVoiceBtn" onclick="toggleFloatingVoice()">🎤</button>
+
+    <div id="mainContent" style="display: none;">
+        <div class="header">
+            <div class="header-content">
+                <span class="header-icon">🦯</span>
+                <div>
+                    <h1>智能盲杖 · 安全监护平台</h1>
+                    <p>守护每一段安全旅程</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav">
+            <a onclick="show('home')"><span class="nav-icon">🏠</span>首页</a>
+            <a onclick="show('device')"><span class="nav-icon">📱</span>设备</a>
+            <a onclick="show('map')"><span class="nav-icon">🗺️</span>导航</a>
+            <a onclick="show('fall')"><span class="nav-icon">⚠️</span>预警</a>
+            <a onclick="show('contact')"><span class="nav-icon">👥</span>联系人</a>
+            <a onclick="show('record')"><span class="nav-icon">📋</span>记录</a>
+            <a onclick="show('setting')"><span class="nav-icon">⚙️</span>设置</a>
+            <a onclick="logout()" class="nav-logout"><span class="nav-icon">🚪</span>退出</a>
+        </div>
+
+        <div class="container">
+            <div class="page active" id="home">
+                <h2>🏠 平台首页</h2>
+                <div class="hero-section">
+                    <span class="hero-icon">🦯</span>
+                    <div class="hero-text">
+                        <h3>欢迎使用智能盲杖监护系统</h3>
+                        <p>我们致力于为视障人士提供更安全、更便捷的出行体验。通过实时定位、导航和紧急联系人功能，让每一次出行都充满信心与安全感。</p>
+                    </div>
+                </div>
+                <div class="feature-grid">
+                    <div class="feature-card" onclick="getCurrentLocation()" style="cursor: pointer;">
+                        <span class="feature-icon">📍</span>
+                        <h3>实时定位</h3>
+                        <p>精准定位盲杖位置，实时追踪行走轨迹</p>
+                    </div>
+                    <div class="feature-card" onclick="show('map')" style="cursor: pointer;">
+                        <span class="feature-icon">🧭</span>
+                        <h3>智能导航</h3>
+                        <p>百度地图导航，规划最优出行路线</p>
+                    </div>
+                    <div class="feature-card" onclick="show('contact')" style="cursor: pointer;">
+                        <span class="feature-icon">👥</span>
+                        <h3>紧急联系人</h3>
+                        <p>管理紧急联系人，一键通知求助</p>
+                    </div>
+                    <div class="feature-card" onclick="show('device')" style="cursor: pointer;">
+                        <span class="feature-icon">📱</span>
+                        <h3>设备状态</h3>
+                        <p>查看设备电量、信号等状态信息</p>
+                    </div>
+                    <div class="feature-card" onclick="show('record')" style="cursor: pointer;">
+                        <span class="feature-icon">📋</span>
+                        <h3>行走记录</h3>
+                        <p>查看历史行走轨迹和报警记录</p>
+                    </div>
+                    <div class="feature-card" onclick="show('setting')" style="cursor: pointer;">
+                        <span class="feature-icon">⚙️</span>
+                        <h3>系统设置</h3>
+                        <p>个性化设置，语音控制配置</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div class="page" id="device">
+                <h2>📱 设备状态</h2>
+                <div class="device-status-grid">
+                    <div class="device-status-card">
+                        <div class="device-status-icon">🔋</div>
+                        <div class="device-status-value" id="bat">88%</div>
+                        <div class="device-status-label">盲杖电量</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 88%;"></div>
+                        </div>
+                    </div>
+                    <div class="device-status-card">
+                        <div class="device-status-icon">📶</div>
+                        <div class="device-status-value" id="sig">正常</div>
+                        <div class="device-status-label">信号状态</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 90%;"></div>
+                        </div>
+                    </div>
+                    <div class="device-status-card">
+                        <div class="device-status-icon">🌡️</div>
+                        <div class="device-status-value" id="temp">25°C</div>
+                        <div class="device-status-label">环境温度</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="device-status-card">
+                        <div class="device-status-icon">📡</div>
+                        <div class="device-status-value" id="mode">户外模式</div>
+                        <div class="device-status-label">工作模式</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 25px;">
+                    <h3>📊 设备详情</h3>
+                    <p>设备名称：智能盲杖 Pro</p>
+                    <p>设备序列号：SN123456789</p>
+                    <p>固件版本：v2.1.5</p>
+                    <p>最后同步时间：<span id="lastSync">刚刚</span></p>
+                </div>
+            </div>
+
+            <div class="page" id="map">
+                <h2>🗺️ 实时定位与导航</h2>
+                <div class="map-container" id="mapContainer">
+                    <div id="baiduMap"></div>
+                    <div class="map-controls">
+                        <button class="map-control-btn" onclick="getCurrentLocation()" title="获取当前位置">📍</button>
+                        <button class="map-control-btn" onclick="zoomIn()" title="放大">➕</button>
+                        <button class="map-control-btn" onclick="zoomOut()" title="缩小">➖</button>
+                        <button class="map-control-btn" onclick="resetMap()" title="重置地图">🔄</button>
+                    </div>
+                </div>
+                <p id="posInfo" style="margin-top: 18px; font-size: 17px; color: #2c3e50;">📍 当前位置：正在获取...</p>
+                <div class="input-with-btn" style="margin-top: 18px;">
+                    <input type="text" id="destination" placeholder="输入目的地">
+                    <button class="btn" onclick="startNavigation()">🧭 开始导航</button>
+                </div>
+                <div id="navigationOptions" style="margin-top: 20px; display: none;">
+                    <div class="card">
+                        <h3>📍 导航路线已规划</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px;">
+                            <button class="btn btn-success" onclick="openBaiduMapApp()">📱 打开百度地图APP</button>
+                            <button class="btn btn-primary" onclick="startWebNavigation()">🌐 网页实时导航</button>
+                            <button class="btn" onclick="startSimulationNavigation()">🎮 模拟导航演示</button>
+                            <button class="btn btn-danger" onclick="cancelNavigation()">❌ 取消导航</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="record">
+                <h2>📋 行走轨迹 & 报警记录</h2>
+                <div class="card">
+                    <h3>📊 今日统计</h3>
+                    <p>行走步数：<strong id="stepsCount">0</strong> 步</p>
+                    <p>行走距离：<strong id="distanceWalked">0.00</strong> 公里</p>
+                    <p>累计行走时间：<strong id="walkingTime">0</strong> 分钟</p>
+                </div>
+                <div class="card">
+                    <h3>🗺️ 今日轨迹</h3>
+                    <div id="trackMap" style="height: 200px; border-radius: 10px; margin-bottom: 15px;"></div>
+                    <div id="trackPoints" style="font-size: 13px; color: #666; max-height: 100px; overflow-y: auto;">
+                        <p>点击导航页面的"获取当前位置"开始记录轨迹</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📜 历史记录</h3>
+                    <div class="log-box" id="log">
+                        <div>[2024-01-15 09:30:22] 系统启动</div>
+                        <div>[2024-01-15 09:31:05] 设备连接成功</div>
+                        <div>[2024-01-15 09:35:18] 开始导航到：白城师范学院</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="fall">
+                <h2>⚠️ 跌倒检测预警</h2>
+                <div id="fallStatusContainer">
+                    <div id="fallStatusCard" class="device-status-card" style="padding: 60px 40px; text-align: center; border: 5px solid #4CAF50; border-radius: 20px; margin: 20px 0;">
+                        <div style="font-size: 100px; margin-bottom: 30px;" id="fallIcon">✅</div>
+                        <div style="font-size: 48px; font-weight: bold; color: #4CAF50; margin-bottom: 30px;" id="fallText">正常</div>
+                        <div style="font-size: 16px; color: #666;" id="fallTime">--:--:--</div>
+                        <div style="margin-top: 30px; padding: 15px 30px; border-radius: 25px; background: #e8f5e9; display: inline-block; font-size: 18px;" id="fallConnection">
+                            <span id="connectionText">🔴 未连接</span>
+                            <span id="loadingSpinner" style="display: none; margin-left: 10px;">
+                                <span class="spinner"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="contact">
+                <h2>👥 紧急联系人管理</h2>
+                <div id="contactList">
+                    <div style="padding: 10px 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px; color: #6c757d; font-size: 14px;">
+                        📊 默认联系人：2/5（最多5个）
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-info">
+                            <div class="contact-avatar">👨</div>
+                            <div>
+                                <strong>家人 ⭐</strong><br>
+                                <span style="color: #7f8c8d;">138****8888 (默认)</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editContact(0)">✏️ 编辑</button>
+                            <button class="btn btn-success" onclick="setDefaultContact(0)">⭐ 默认</button>
+                            <button class="btn btn-danger" onclick="removeContact(0)">🗑️ 删除</button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-info">
+                            <div class="contact-avatar">👩</div>
+                            <div>
+                                <strong>朋友 ⭐</strong><br>
+                                <span style="color: #7f8c8d;">139****9999 (默认)</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editContact(1)">✏️ 编辑</button>
+                            <button class="btn btn-success" onclick="setDefaultContact(1)">⭐ 默认</button>
+                            <button class="btn btn-danger" onclick="removeContact(1)">🗑️ 删除</button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-info">
+                            <div class="contact-avatar">👴</div>
+                            <div>
+                                <strong>邻居</strong><br>
+                                <span style="color: #7f8c8d;">137****7777</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editContact(2)">✏️ 编辑</button>
+                            <button class="btn btn-warning" onclick="setDefaultContact(2)">🏆 设为默认</button>
+                            <button class="btn btn-danger" onclick="removeContact(2)">🗑️ 删除</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 28px;">
+                    <h3>➕ 添加紧急联系人</h3>
+                    <div class="input-group">
+                        <input type="text" id="contactName" placeholder="姓名">
+                        <input type="text" id="contactFullPhone" placeholder="完整手机号（11位）" maxlength="11">
+                        <input type="text" id="contactWechat" placeholder="微信ID（选填）">
+                        <input type="text" id="contactQq" placeholder="QQ号（选填）">
+                    </div>
+                    <p style="font-size: 13px; color: #7f8c8d; margin-top: 8px;">提示：输入完整手机号后会自动生脱敏显示</p>
+                    <button class="btn btn-success" onclick="addContact()">✅ 添加联系人</button>
+                </div>
+            </div>
+
+            <div class="page" id="setting">
+                <h2>⚙️ 系统设置</h2>
+                <div class="setting-grid">
+                    <div class="setting-section">
+                        <h3>🔊 基础设置</h3>
+                        <div class="setting-row">
+                            <span>预警音量</span>
+                            <select id="volume" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                                <option>高</option><option>中</option><option>低</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
+                            <span>工作模式</span>
+                            <select id="workMode" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                                <option>户外模式</option><option>室内模式</option><option>静音模式</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
+                            <span>语音提示</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="voicePrompt" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="setting-section">
+                        <h3>🛡️ 安全区域</h3>
+                        <p>已设置：<span style="color: #2ecc71;">家</span>、<span style="color: #2ecc71;">学校</span></p>
+                        <div style="margin-top: 12px;">
+                            <input type="text" id="safeArea" placeholder="添加安全区域" style="padding: 8px; width: 150px; border-radius: 8px; border: 1px solid #ddd;">
+                            <button class="btn btn-success" onclick="addSafeArea()" style="padding: 8px 15px; margin: 5px;">➕</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-section">
+                        <h3>🔐 账号安全</h3>
+                        <p style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px;">当前用户：<strong id="currentUser">admin</strong></p>
+                        <button class="btn" onclick="showChangePassword()" style="padding: 10px 18px; margin: 5px 0;">🔑 修改密码</button>
+                        <button class="btn" onclick="logout()" style="padding: 10px 18px; margin: 5px;">🚪 退出登录</button>
+                    </div>
+
+                    <div class="setting-section">
+                        <h3>🎤 语音控制</h3>
+                        <p style="color: #7f8c8d; font-size: 14px;">支持的指令：</p>
+                        <p style="font-size: 13px;">🎯 "导航到..." | 🆘 "发送SOS" | 📱 "查看状态"</p>
+                        <button class="btn" onclick="testVoiceControl()" style="padding: 10px 18px; margin: 8px 0;">🎤 测试</button>
+                    </div>
+
+                    <div class="setting-section">
+                        <h3>📱 设备管理</h3>
+                        <p><strong>设备：</strong>智能盲杖 Pro</p>
+                        <p><strong>ID：</strong>SN123456789</p>
+                        <p><strong>状态：</strong><span class="status-indicator">在线</span></p>
+                        <button class="btn" onclick="connectDevice()" style="padding: 10px 18px; margin: 8px 0;">🔗 重连设备</button>
+                    </div>
+
+                    <div class="setting-section">
+                        <h3>🗑️ 数据管理</h3>
+                        <p style="font-size: 13px; color: #e74c3c; margin-bottom: 10px;">⚠️ 清除数据后将无法恢复</p>
+                        <button class="btn btn-danger" onclick="clearAllData()" style="padding: 10px 18px; margin: 5px;">🗑️ 清除所有数据</button>
+                        <button class="btn" onclick="exportData()" style="padding: 10px 18px; margin: 5px;">📥 导出数据</button>
+                    </div>
+
+                    <div class="setting-section">
+                        <h3>👤 个人信息</h3>
+                        <p><strong>用户名：</strong><span id="userDisplayName">admin</span></p>
+                        <p><strong>手机号：</strong><span id="userPhone">138****8888</span></p>
+                        <p><strong>注册时间：</strong>2024-01-01</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="changePasswordModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
+                <div style="background: white; padding: 35px; border-radius: 20px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <h3 style="margin-bottom: 20px; color: #2c3e50; display: flex; align-items: center; gap: 10px;">🔐 修改密码</h3>
+                    <div class="form-group">
+                        <label>当前密码</label>
+                        <input type="password" id="oldPassword" placeholder="请输入当前密码">
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="password" id="newPassword" placeholder="请输入新密码（6位以上）">
+                    </div>
+                    <div class="form-group">
+                        <label>确认新密码</label>
+                        <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn" onclick="closeChangePassword()" style="flex: 1;">取消</button>
+                        <button class="btn btn-success" onclick="confirmChangePassword()" style="flex: 1;">确认修改</button>
+                    </div>
+                    <div id="changePasswordError" class="error-message" style="display: none; margin-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 后端API配置
+        const API_CONFIG = {
+            baseUrl: 'http://your-server-api.com', // 替换为实际后端API地址
+            sendSmsEndpoint: '/api/sms/send',
+            sendWechatEndpoint: '/api/wechat/send',
+            sendQqEndpoint: '/api/qq/send',
+            getNavigationEndpoint: '/api/navigation/route'
+        };
+
+        // 工具函数：发送HTTP请求
+        async function sendApiRequest(url, method = 'GET', data = {}) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+                
+                if (method !== 'GET') {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(url, options);
+                const result = await response.json();
+                return { success: response.ok, data: result, status: response.status };
+            } catch (error) {
+                console.error('API请求失败:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // 发送紧急求助短信
+        async function sendEmergencySms(contacts, location) {
+            const smsData = {
+                contacts: contacts,
+                location: location,
+                timestamp: new Date().toISOString(),
+                type: 'emergency'
+            };
+            
+            const response = await sendApiRequest(
+                API_CONFIG.baseUrl + API_CONFIG.sendSmsEndpoint,
+                'POST',
+                smsData
+            );
+            
+            return response;
+        }
+
+        // 发送微信消息
+        async function sendWechatMessage(contacts, location) {
+            // 过滤有微信ID的联系人
+            const wechatContacts = contacts.filter(c => c.wechatId);
+            
+            if (wechatContacts.length === 0) {
+                return { success: false, message: '没有配置微信ID的联系人' };
+            }
+            
+            const messageData = {
+                contacts: wechatContacts,
+                location: location,
+                timestamp: new Date().toISOString(),
+                type: 'wechat'
+            };
+            
+            const response = await sendApiRequest(
+                API_CONFIG.baseUrl + API_CONFIG.sendWechatEndpoint,
+                'POST',
+                messageData
+            );
+            
+            return response;
+        }
+
+        // 发送QQ消息
+        async function sendQQMessage(contacts, location) {
+            // 过滤有QQ号的联系人
+            const qqContacts = contacts.filter(c => c.qqNumber);
+            
+            if (qqContacts.length === 0) {
+                return { success: false, message: '没有配置QQ号的联系人' };
+            }
+            
+            const messageData = {
+                contacts: qqContacts,
+                location: location,
+                timestamp: new Date().toISOString(),
+                type: 'qq'
+            };
+            
+            const response = await sendApiRequest(
+                API_CONFIG.baseUrl + API_CONFIG.sendQqEndpoint,
+                'POST',
+                messageData
+            );
+            
+            return response;
+        }
+
+        let isLoggedIn = false;
+        // 数据持久化存储
+        const STORAGE_KEYS = {
+            CONTACTS: 'smartCane_contacts',
+            TRACK: 'smartCane_track',
+            TOTAL_DISTANCE: 'smartCane_totalDistance',
+            NAVIGATION_HISTORY: 'smartCane_navHistory',
+            SETTINGS: 'smartCane_settings'
+        };
+
+        // 从localStorage加载数据
+        function loadFromStorage(key, defaultValue) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : defaultValue;
+            } catch (e) {
+                console.error(`加载${key}失败:`, e);
+                return defaultValue;
+            }
+        }
+
+        // 保存数据到localStorage
+        function saveToStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error(`保存${key}失败:`, e);
+            }
+        }
+
+        // ========== 跌倒检测全局变量 ==========
+        let fallConnected = false;
+        let fallServerUrl = localStorage.getItem('fallServerUrl') || 'https://decay-capitol-primary.ngrok-free.dev';
+        let pollingTimer = null;
+
+        // ========== 显示服务器配置弹窗 ==========
+        function showServerConfig() {
+            const url = prompt('请输入跌倒检测服务器地址：\n（例如：http://192.168.1.119:8080 或 https://xxx.ngrok.io）', fallServerUrl);
+            if (url) {
+                fallServerUrl = url;
+                localStorage.setItem('fallServerUrl', url);
+                alert('服务器地址已保存，请刷新页面！');
+            }
+        }
+
+        function getFallHttpUrl() {
+            if (!fallServerUrl.startsWith('http')) {
+                fallServerUrl = 'http://' + fallServerUrl;
+            }
+            return fallServerUrl;
+        }
+
+        // ========== HTTP轮询获取跌倒状态 ==========
+        async function pollFallStatus() {
+            const connectionText = document.getElementById('connectionText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const connectionDiv = document.getElementById('fallConnection');
+            
+            try {
+                const response = await fetch(getFallHttpUrl() + '/status');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    fallConnected = true;
+                    
+                    if (connectionText) {
+                        connectionText.textContent = '🟢 已连接';
+                    }
+                    if (loadingSpinner) {
+                        loadingSpinner.style.display = 'none';
+                    }
+                    if (connectionDiv) {
+                        connectionDiv.style.background = '#e8f5e9';
+                        connectionDiv.style.color = '#4CAF50';
+                    }
+                    
+                    updateFallStatus(data);
+                } else {
+                    throw new Error('HTTP错误');
+                }
+            } catch (error) {
+                fallConnected = false;
+                
+                if (connectionText) {
+                    connectionText.textContent = '🔴 连接错误';
+                }
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'none';
+                }
+                if (connectionDiv) {
+                    connectionDiv.style.background = '#ffebee';
+                    connectionDiv.style.color = '#f44336';
+                }
+                console.error('获取跌倒状态失败:', error);
+            }
+            
+            // 继续轮询（每1秒一次）
+            pollingTimer = setTimeout(pollFallStatus, 1000);
+        }
+
+        // ========== 连接跌倒检测设备（启动轮询） ==========
+        function connectFallDevice() {
+            const connectionText = document.getElementById('connectionText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const connectionDiv = document.getElementById('fallConnection');
+            
+            // 显示正在连接状态
+            if (connectionText) {
+                connectionText.textContent = '🟡 正在连接...';
+            }
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'inline-block';
+            }
+            if (connectionDiv) {
+                connectionDiv.style.background = '#fff8e1';
+                connectionDiv.style.color = '#f57c00';
+            }
+            
+            // 停止之前的轮询
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+            }
+            
+            // 开始轮询
+            pollFallStatus();
+        }
+
+        // ========== 停止轮询 ==========
+        function stopFallPolling() {
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+                pollingTimer = null;
+            }
+        }
+
+        // ========== 更新跌倒状态显示 ==========
+        function updateFallStatus(data) {
+            const statusCard = document.getElementById('fallStatusCard');
+            const fallIcon = document.getElementById('fallIcon');
+            const fallText = document.getElementById('fallText');
+            const fallTime = document.getElementById('fallTime');
+            const alertBox = document.getElementById('fallAlertBox');
+
+            if (fallTime) {
+                fallTime.textContent = data.timestamp || '--:--:--';
+            }
+
+            if (data.is_fallen) {
+                if (statusCard) {
+                    statusCard.style.borderColor = '#f44336';
+                    statusCard.style.animation = 'shake 0.5s ease-in-out infinite';
+                }
+                if (fallIcon) {
+                    fallIcon.textContent = '⚠️';
+                }
+                if (fallText) {
+                    fallText.textContent = '跌倒';
+                    fallText.style.color = '#f44336';
+                }
+                if (alertBox) {
+                    alertBox.style.display = 'block';
+                    alertBox.style.animation = 'pulse 1s ease-in-out infinite';
+                }
+                console.log('⚠️ 检测到跌倒！');
+                
+                // 如果跌倒，尝试发送紧急求助
+                triggerFallAlert();
+            } else {
+                if (statusCard) {
+                    statusCard.style.borderColor = '#4CAF50';
+                    statusCard.style.animation = 'none';
+                }
+                if (fallIcon) {
+                    fallIcon.textContent = '✅';
+                }
+                if (fallText) {
+                    fallText.textContent = '正常';
+                    fallText.style.color = '#4CAF50';
+                }
+                if (alertBox) {
+                    alertBox.style.display = 'none';
+                    alertBox.style.animation = 'none';
+                }
+                console.log('✅ 状态恢复正常');
+            }
+        }
+
+        // ========== 跌倒时触发紧急求助 ==========
+        function triggerFallAlert() {
+            // 获取当前位置
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        console.log(`跌倒位置：${lat}, ${lng}`);
+                        // 这里可以调用发送紧急求助的函数
+                        alert('检测到跌倒！已获取位置信息，正在通知紧急联系人！');
+                    },
+                    function(error) {
+                        console.error('获取位置失败:', error);
+                        alert('检测到跌倒！正在通知紧急联系人！');
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                alert('检测到跌倒！正在通知紧急联系人！');
+            }
+        }
+
+        // ========== 重置蜂鸣器 ==========
+        function resetFallBuzzer() {
+            fetch(getFallHttpUrl() + '/reset')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('蜂鸣器已关闭');
+                        console.log('蜂鸣器已重置');
+                    }
+                })
+                .catch(() => {
+                    alert('重置失败，请检查设备连接');
+                    console.error('重置蜂鸣器失败');
+                });
+        }
+
+        // ========== 页面加载时自动连接 ==========
+        window.addEventListener('load', function() {
+            // 延迟连接，确保DOM已加载
+            setTimeout(function() {
+                connectFallDevice();
+            }, 1000);
+            
+            // 显示当前服务器地址
+            const currentServerUrl = document.getElementById('currentServerUrl');
+            if (currentServerUrl) {
+                currentServerUrl.textContent = fallServerUrl.replace('http://', '').replace('https://', '');
+            }
+        });
+
+        // ========== 离开页面时断开连接 ==========
+        window.addEventListener('beforeunload', function() {
+            if (fallSocket) {
+                fallSocket.close();
+            }
+        });
+
+        // 联系人数据（带持久化）
+        let contacts = loadFromStorage(STORAGE_KEYS.CONTACTS, [
+            { name: '家人', phone: '138****8888', fullPhone: '13812348888', isDefault: true, wechatId: 'family_wx001', qqNumber: '123456789' },
+            { name: '朋友', phone: '139****9999', fullPhone: '13912349999', isDefault: true, wechatId: '', qqNumber: '987654321' },
+            { name: '邻居', phone: '137****7777', fullPhone: '13712347777', isDefault: false, wechatId: 'neighbor_wx001', qqNumber: '' },
+            { name: '同事', phone: '136****6666', fullPhone: '13612346666', isDefault: false, wechatId: '', qqNumber: '666666666' }
+        ]);
+        const MAX_DEFAULT_CONTACTS = 5; // 最多5个默认联系人
+
+        // 轨迹数据（带持久化）
+        let trackPoints = loadFromStorage(STORAGE_KEYS.TRACK, []);
+        let totalDistance = loadFromStorage(STORAGE_KEYS.TOTAL_DISTANCE, 0);
+
+        // 导航历史（带持久化）
+        let navigationHistory = loadFromStorage(STORAGE_KEYS.NAVIGATION_HISTORY, []);
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                const colors = ['#ff6b6b', '#4ecdc4', '#a855f7', '#3b82f6', '#f39c12', '#2ecc71'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                container.appendChild(particle);
+            }
+        }
+
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        }
+
+        function show(id) {
+            // 如果离开地图页面，停止定位监控
+            if (isLocating && id !== 'map') {
+                stopLocationWatch();
+            }
+
+            // 如果离开地图页面，清除导航路线
+            if (id !== 'map') {
+                cancelNavigation();
+            }
+
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            document.getElementById(id).classList.add('active');
+            // 页面切换后滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 如果切换到预警页面，自动连接跌倒检测设备
+            if (id === 'fall') {
+                connectFallDevice();
+            }
+        }
+
+        function login() {
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const errorDiv = document.getElementById('loginError');
+
+                if (!errorDiv) {
+                    console.error('loginError element not found');
+                    alert('登录出错，请刷新页面重试');
+                    return;
+                }
+
+                if (username === '' || password === '') {
+                    errorDiv.textContent = '请输入用户名和密码';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                // 默认管理员账号
+                if (username === 'admin' && password === '123456') {
+                    isLoggedIn = true;
+                    currentUserData = { username: 'admin', phone: '138****8888', password: '123456' };
+                    localStorage.setItem('smartCaneCurrentUser', JSON.stringify(currentUserData));
+                    
+                    // 检查元素是否存在
+                    const loginPage = document.getElementById('loginPage');
+                    const mainContent = document.getElementById('mainContent');
+                    const currentUser = document.getElementById('currentUser');
+                    const userDisplayName = document.getElementById('userDisplayName');
+                    const userPhone = document.getElementById('userPhone');
+                    
+                    if (loginPage) loginPage.style.display = 'none';
+                    if (mainContent) mainContent.style.display = 'block';
+                    if (currentUser) currentUser.textContent = 'admin';
+                    if (userDisplayName) userDisplayName.textContent = 'admin';
+                    if (userPhone) userPhone.textContent = '138****8888';
+                    
+                    currentStep = 'main';
+                    
+                    // 停止语音监听
+                    try { stopListening(); } catch(e) {}
+                    speak('登录成功，欢迎使用智能盲杖系统');
+                    setTimeout(() => { 
+                        try { startListening(); } catch(e) {}
+                    }, 2000);
+                    return;
+                }
+
+                // 检查用户列表
+                const user = users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    isLoggedIn = true;
+                    currentUserData = user;
+                    localStorage.setItem('smartCaneCurrentUser', JSON.stringify(user));
+                    
+                    const loginPage = document.getElementById('loginPage');
+                    const mainContent = document.getElementById('mainContent');
+                    const currentUser = document.getElementById('currentUser');
+                    const userDisplayName = document.getElementById('userDisplayName');
+                    const userPhone = document.getElementById('userPhone');
+                    
+                    if (loginPage) loginPage.style.display = 'none';
+                    if (mainContent) mainContent.style.display = 'block';
+                    if (currentUser) currentUser.textContent = user.username;
+                    if (userDisplayName) userDisplayName.textContent = user.username;
+                    if (userPhone) userPhone.textContent = '未设置';
+                    
+                    currentStep = 'main';
+                    try { stopListening(); } catch(e) {}
+                    speak('登录成功，欢迎使用智能盲杖系统');
+                    setTimeout(() => { 
+                        try { startListening(); } catch(e) {}
+                    }, 2000);
+                } else {
+                    errorDiv.textContent = '用户名或密码错误';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (e) {
+                console.error('登录失败:', e);
+                alert('登录出错，请刷新页面重试');
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            currentUserData = null;
+            localStorage.removeItem('smartCaneCurrentUser');
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            hardwareConnected = false;
+            document.getElementById('hardwareStatus').innerHTML = '🔴 未连接';
+            document.getElementById('hardwareInfo').innerHTML = '<p>提示：请确保盲杖设备已开启蓝牙，并靠近手机</p>';
+            stopListening();
+            speak('已退出登录，欢迎再次使用');
+            currentStep = 'login';
+            setTimeout(() => {
+                guideLogin();
+            }, 1500);
+        }
+
+        // 清除所有数据
+        function clearAllData() {
+            if (!confirm('⚠️ 警告：此操作将清除所有数据（包括联系人、轨迹、导航历史等），且无法恢复！确定要继续吗？')) {
+                return;
+            }
+            
+            // 清除服务器端数据
+            clearServerData();
+            
+            // 清除 localStorage 中的所有数据
+            for (const key in STORAGE_KEYS) {
+                localStorage.removeItem(STORAGE_KEYS[key]);
+            }
+            
+            // 清除用户相关数据
+            localStorage.removeItem('smartCaneUsers');
+            localStorage.removeItem('smartCaneCurrentUser');
+            
+            // 重置内存中的数据
+            contacts = [];
+            trackPoints = [];
+            totalDistance = 0;
+            navigationHistory = [];
+            
+            // 更新界面
+            document.getElementById('trackPoints').innerHTML = '<p>点击导航页面的"获取当前位置"开始记录轨迹</p>';
+            document.getElementById('stepsCount').textContent = '0';
+            document.getElementById('distanceWalked').textContent = '0.00';
+            document.getElementById('walkingTime').textContent = '0';
+            
+            // 清空地图
+            if (map) {
+                map.clearOverlays();
+            }
+            
+            // 清空导航相关数据
+            navigationSteps = [];
+            currentStepIndex = 0;
+            isNavigating = false;
+            
+            // 显示成功消息
+            alert('✅ 所有数据已清除！');
+            addLog('所有数据已清除');
+            speak('所有数据已清除');
+            
+            // 退出登录
+            logout();
+        }
+
+        // 清除服务器端数据
+        async function clearServerData() {
+            try {
+                const userId = currentUserData?.username || 'admin';
+                await fetch(`http://localhost:3000/api/location/logs?userId=${userId}`, {
+                    method: 'DELETE'
+                });
+                console.log('服务器端数据已清除');
+            } catch (e) {
+                console.log('服务器暂不可用');
+            }
+        }
+
+        // 导出数据
+        function exportData() {
+            const exportData = {
+                contacts: contacts,
+                trackPoints: trackPoints,
+                totalDistance: totalDistance,
+                navigationHistory: navigationHistory,
+                exportTime: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `智能盲杖数据_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ 数据导出成功！');
+            addLog('数据导出成功');
+        }
+
+        function speak(txt) {
+            if('speechSynthesis' in window) {
+                let u = new SpeechSynthesisUtterance(txt);
+                u.lang = 'zh-CN';
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        let recognition = null;
+        let currentRecognitionField = null;
+        let isListening = false;
+        let listenInterval = null;
+        let currentStep = 'login';
+
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.lang = 'zh-CN';
+
+                recognition.onresult = function(event) {
+                    const last = event.results.length - 1;
+                    const transcript = event.results[last][0].transcript.trim();
+                    const hint = document.getElementById('voiceHint');
+                    const overlay = document.getElementById('voiceOverlay');
+                    const btn = document.getElementById('floatingVoiceBtn');
+                    hint.textContent = '✓ 已识别：' + transcript;
+                    setTimeout(() => {
+                        hint.classList.remove('show');
+                        overlay.classList.remove('show');
+                        btn.classList.remove('active');
+                        btn.textContent = '🎤';
+                    }, 1500);
+                    handleVoiceCommand(transcript);
+                };
+
+                recognition.onerror = function(event) {
+                    console.log('语音识别错误：', event.error);
+                    if (event.error === 'no-speech') {
+                        const hint = document.getElementById('voiceHint');
+                        hint.textContent = '未检测到声音，请重试';
+                        setTimeout(() => {
+                            hint.classList.remove('show');
+                        }, 1500);
+                    }
+                };
+
+                recognition.onend = function() {
+                    if (isListening) {
+                        setTimeout(() => {
+                            if (isListening) {
+                                try { recognition.start(); } catch(e) {}
+                            }
+                        }, 500);
+                    } else {
+                        const hint = document.getElementById('voiceHint');
+                        const overlay = document.getElementById('voiceOverlay');
+                        hint.classList.remove('show');
+                        overlay.classList.remove('show');
+                    }
+                };
+            }
+        }
+
+        function startListening() {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+            if (!recognition) {
+                return;
+            }
+            isListening = true;
+            try {
+                recognition.start();
+            } catch (e) {
+                console.log('启动监听失败');
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            if (recognition) {
+                try { recognition.stop(); } catch(e) {}
+            }
+        }
+
+        function handleVoiceCommand(text) {
+            console.log('识别到：' + text);
+
+            if (currentStep === 'login_check') {
+                if (text.includes('没有') || text.includes('注册') || text.includes('新用户') || text.includes('注册账户')) {
+                    showRegister();
+                    guideRegister();
+                    return;
+                } else {
+                    const usernameInput = document.getElementById('username');
+                    usernameInput.value = text;
+                    speak('已识别用户名：' + text + '，请说密码登录');
+                    currentStep = 'login_password';
+                    startListening();
+                    return;
+                }
+            }
+
+            if (currentStep === 'login') {
+                const usernameInput = document.getElementById('username');
+                if (!usernameInput.value && text) {
+                    usernameInput.value = text;
+                    speak('已识别用户名：' + text + '，请说密码登录');
+                    currentStep = 'login_password';
+                    startListening();
+                    return;
+                }
+                if (text.includes('登录') || text.includes('登陆')) {
+                    login();
+                    return;
+                }
+            }
+
+            if (currentStep === 'login_password') {
+                const passwordInput = document.getElementById('password');
+                if (!passwordInput.value && text) {
+                    passwordInput.value = text;
+                    speak('已识别密码，现在说登录');
+                    currentStep = 'login';
+                    startListening();
+                    return;
+                }
+                if (text.includes('登录') || text.includes('登陆')) {
+                    login();
+                    return;
+                }
+            }
+
+            if (currentStep === 'main') {
+                if (text.includes('首页') || text.includes('主页') || text.includes('回家')) {
+                    show('home');
+                    speak('已打开首页');
+                } else if (text.includes('设备') || text.includes('状态')) {
+                    show('device');
+                    speak('已打开设备状态，电量88%，信号正常');
+                } else if (text.includes('地图') || text.includes('导航') || text.includes('定位')) {
+                    show('map');
+                    speak('已打开定位导航');
+                } else if (text.includes('预警') || text.includes('障碍') || text.includes('警告')) {
+                    show('warn');
+                    speak('已打开障碍物预警，前方安全');
+                } else if (text.includes('求助') || text.includes('SOS') || text.includes('紧急')) {
+                    show('sos');
+                    speak('已打开紧急求助页面');
+                } else if (text.includes('记录') || text.includes('历史')) {
+                    show('record');
+                    speak('已打开历史记录');
+                } else if (text.includes('联系') || text.includes('联系人')) {
+                    show('contact');
+                    speak('已打开紧急联系人管理');
+                } else if (text.includes('设置') || text.includes('系统设置')) {
+                    show('setting');
+                    speak('已打开系统设置');
+                } else if (text.includes('退出') || text.includes('登出')) {
+                    logout();
+                    return;
+                } else if (text.includes('帮助') || text.includes('帮助我')) {
+                    speak('可以说：首页、设备状态、导航、预警、求救、记录、联系人、设置、退出');
+                } else {
+                    speak('抱歉，我没有听清楚，您可以说首页、设备状态、导航等指令');
+                }
+                startListening();
+            }
+        }
+
+        function startVoiceInput(fieldId, inputId) {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+            if (!recognition) {
+                speak('抱歉，您的浏览器不支持语音输入');
+                alert('抱歉，您的浏览器不支持语音输入功能');
+                return;
+            }
+            currentRecognitionField = fieldId;
+            const inputField = document.getElementById(fieldId);
+            const micBtn = document.getElementById(inputId);
+            document.querySelectorAll('.mic-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.textContent = '🎤';
+            });
+            micBtn.classList.add('active');
+            micBtn.textContent = '🔴';
+            speak('请说话');
+            try {
+                recognition.start();
+            } catch (e) {
+                console.log('语音识别启动失败：', e);
+            }
+        }
+
+        function guideLogin() {
+            speak('欢迎使用智能盲杖系统，请问您有账户吗？如果有，请直接说用户名；如果没有，请说注册账户');
+            currentStep = 'login_check';
+            setTimeout(() => {
+                startListening();
+            }, 2000);
+        }
+
+        function guideRegister() {
+            speak('欢迎注册，请注意用户名支持中文名字，也可以使用英文，区分大小写，请直接说用户名');
+            currentStep = 'register';
+            startListening();
+        }
+
+        function toggleFloatingVoice() {
+            const btn = document.getElementById('floatingVoiceBtn');
+            const hint = document.getElementById('voiceHint');
+            const overlay = document.getElementById('voiceOverlay');
+
+            if (isListening) {
+                stopListening();
+                btn.classList.remove('active');
+                btn.textContent = '🎤';
+                hint.classList.remove('show');
+                overlay.classList.remove('show');
+            } else {
+                startListening();
+                btn.classList.add('active');
+                btn.textContent = '🔴';
+                hint.textContent = '🎤 请说话...';
+                hint.classList.add('show');
+                overlay.classList.add('show');
+                speak('请说话');
+            }
+        }
+
+        function testWarn() {
+            let dom = document.getElementById('warnInfo');
+            dom.innerHTML = '<div class="warn-icon">⚠️</div><div class="warn-text" style="color: #e74c3c; font-weight: bold;">🚧 警告：前方1.5米有台阶，请注意！</div>';
+            dom.style.background = 'linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%)';
+            dom.style.border = '3px solid #ffcdd2';
+            speak('前方一点五米有台阶，请注意绕行');
+            addLog('障碍物预警：台阶');
+        }
+
+        async function sendSos() {
+            let result = document.getElementById('sosResult');
+            
+            // 显示正在处理状态
+            result.innerHTML = '<div class="card" style="background: linear-gradient(135deg, #fff5f5, #ffe0e0); border: 3px solid #ffcdd2;"><h3 style="color: #e74c3c;">🚨 正在发送紧急求助...</h3><p>正在获取当前位置并通知紧急联系人...</p></div>';
+            speak('紧急求助已触发，正在获取位置并通知紧急联系人');
+            addLog('SOS报警触发，开始处理');
+            
+            try {
+                // 获取当前位置
+                const position = await new Promise((resolve, reject) => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000
+                        });
+                    } else {
+                        reject(new Error('浏览器不支持地理定位'));
+                    }
+                });
+                
+                const location = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: position.timestamp
+                };
+                
+                addLog(`获取位置成功: 纬度 ${location.lat.toFixed(6)}, 经度 ${location.lng.toFixed(6)}`);
+                
+                // 获取地址信息
+                let address = '未知位置';
+                if (typeof BMap !== 'undefined') {
+                    const bdPoint = convertToBaiduCoordinate(location.lng, location.lat);
+                    address = await new Promise((resolve) => {
+                        const point = new BMap.Point(bdPoint.lng, bdPoint.lat);
+                        const geocoder = new BMap.Geocoder();
+                        geocoder.getLocation(point, function(result) {
+                            if (result && result.addressComponents) {
+                                const addr = result.addressComponents;
+                                resolve(`${addr.province}${addr.city}${addr.district}${addr.street}${addr.streetNumber}`);
+                            } else {
+                                resolve(`纬度 ${location.lat.toFixed(4)}, 经度 ${location.lng.toFixed(4)}`);
+                            }
+                        });
+                    });
+                }
+                // 准备完整的联系人信息
+                const fullLocation = { ...location, address: address };
+                
+                // 记录发送结果
+                const sendResults = [];
+                
+                // 1. 发送短信
+                const smsContacts = contacts.map(c => ({
+                    name: c.name,
+                    phone: c.fullPhone || c.phone
+                }));
+                const smsResult = await sendEmergencySms(smsContacts, fullLocation);
+                sendResults.push({
+                    type: '短信',
+                    success: smsResult.success,
+                    count: smsContacts.length,
+                    message: smsResult.message || (smsResult.success ? '发送成功' : '发送失败（需配置后端）')
+                });
+                
+                // 2. 发送微信消息
+                const wechatResult = await sendWechatMessage(contacts, fullLocation);
+                sendResults.push({
+                    type: '微信',
+                    success: wechatResult.success,
+                    count: contacts.filter(c => c.wechatId).length,
+                    message: wechatResult.message || (wechatResult.success ? '发送成功' : '发送失败（需配置后端）')
+                });
+                
+                // 3. 发送QQ消息
+                const qqResult = await sendQQMessage(contacts, fullLocation);
+                sendResults.push({
+                    type: 'QQ',
+                    success: qqResult.success,
+                    count: contacts.filter(c => c.qqNumber).length,
+                    message: qqResult.message || (qqResult.success ? '发送成功' : '发送失败（需配置后端）')
+                });
+                
+                // 生成结果HTML
+                let resultHtml = `
+                    <div class="card" style="background: linear-gradient(135deg, #fff5f5, #ffe0e0); border: 3px solid #ffcdd2;">
+                        <h3 style="color: #e74c3c;">🚨 SOS已发送！</h3>
+                        <p>当前位置：${address}</p>
+                        <p>经纬度：${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}</p>
+                        <p style="margin-top: 15px; font-weight: bold;">📤 通知渠道：</p>
+                `;
+                
+                sendResults.forEach(res => {
+                    const statusIcon = res.success ? '✅' : '🔄';
+                    const statusColor = res.success ? '#2e7d32' : '#f39c12';
+                    resultHtml += `
+                        <p style="color: ${statusColor}; margin-left: 20px;">${statusIcon} ${res.type}：${res.count} 人，${res.message}</p>
+                    `;
+                });
+                
+                resultHtml += '</div>';
+                result.innerHTML = resultHtml;
+                
+                speak('紧急求助已发送，正在通过短信、微信、QQ通知紧急联系人');
+                addLog(`SOS处理完成：短信(${smsContacts.length}人)、微信(${sendResults[1].count}人)、QQ(${sendResults[2].count}人)`);
+                
+            } catch (error) {
+                console.error('SOS处理失败:', error);
+                result.innerHTML = '<div class="card" style="background: linear-gradient(135deg, #fff5f5, #ffe0e0); border: 3px solid #ffcdd2;"><h3 style="color: #e74c3c;">⚠️ SOS处理失败</h3><p>错误信息：' + error.message + '</p><p>已记录报警事件，请手动联系紧急联系人</p></div>';
+                speak('紧急求助处理失败，请手动联系紧急联系人');
+                addLog(`SOS处理失败: ${error.message}`);
+            }
+        }
+
+        function addLog(text) {
+            let t = new Date().toLocaleString();
+            let log = document.getElementById('log');
+            log.innerHTML += `<div>[${t}] ${text}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function addContact() {
+            const name = document.getElementById('contactName').value;
+            const fullPhone = document.getElementById('contactFullPhone').value;
+            const wechat = document.getElementById('contactWechat').value || '';
+            const qq = document.getElementById('contactQq').value || '';
+
+            if (name && fullPhone) {
+                // 检查手机号格式
+                if (!/^1[3-9]\d{9}$/.test(fullPhone)) {
+                    alert('请输入有效的11位手机号');
+                    return;
+                }
+                
+                // 生成脱敏手机号
+                const maskedPhone = fullPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+                
+                // 检查默认联系人数量
+                const defaultCount = contacts.filter(c => c.isDefault).length;
+                
+                contacts.push({ 
+                    name, 
+                    phone: maskedPhone, 
+                    fullPhone, 
+                    wechatId: wechat,
+                    qqNumber: qq,
+                    isDefault: contacts.length === 0 || defaultCount < 5 // 如果是第一个联系人或默认数量不足5个，设为默认
+                });
+                
+                // 保存到localStorage
+                saveToStorage(STORAGE_KEYS.CONTACTS, contacts);
+                
+                updateContactList();
+                document.getElementById('contactName').value = '';
+                document.getElementById('contactFullPhone').value = '';
+                document.getElementById('contactWechat').value = '';
+                document.getElementById('contactQq').value = '';
+                speak('已添加新的紧急联系人');
+                addLog(`添加紧急联系人：${name} ${maskedPhone}`);
+            } else {
+                alert('请填写完整的联系人信息');
+            }
+        }
+
+        function removeContact(index) {
+            const contact = contacts[index];
+            contacts.splice(index, 1);
+            
+            // 如果删除的是默认联系人，设置第一个为默认
+            if (contact.isDefault && contacts.length > 0) {
+                contacts[0].isDefault = true;
+            }
+            
+            // 保存到localStorage
+            saveToStorage(STORAGE_KEYS.CONTACTS, contacts);
+            
+            updateContactList();
+            speak('已删除紧急联系人');
+            addLog(`删除紧急联系人：${contact.name}`);
+        }
+
+        function setDefaultContact(index) {
+            const contact = contacts[index];
+            
+            if (contact.isDefault) {
+                // 取消默认
+                contact.isDefault = false;
+                saveToStorage(STORAGE_KEYS.CONTACTS, contacts);
+                updateContactList();
+                speak(`已取消${contact.name}的默认设置`);
+                addLog(`取消默认联系人：${contact.name}`);
+            } else {
+                // 检查默认联系人数量
+                const defaultCount = contacts.filter(c => c.isDefault).length;
+                
+                if (defaultCount >= 5) {
+                    alert('最多只能设置5个默认联系人');
+                    speak('最多只能设置5个默认联系人');
+                    return;
+                }
+                
+                // 设置为默认
+                contact.isDefault = true;
+                saveToStorage(STORAGE_KEYS.CONTACTS, contacts);
+                updateContactList();
+                speak(`已将${contact.name}设为默认紧急联系人`);
+                addLog(`设为默认联系人：${contact.name}`);
+            }
+        }
+
+        function editContact(index) {
+            const contact = contacts[index];
+            document.getElementById('contactName').value = contact.name;
+            document.getElementById('contactFullPhone').value = contact.fullPhone;
+            document.getElementById('contactWechat').value = contact.wechatId || '';
+            document.getElementById('contactQq').value = contact.qqNumber || '';
+            
+            // 切换到编辑模式
+            const addBtn = document.querySelector('.btn-success[onclick="addContact()"]');
+            addBtn.innerHTML = '✏️ 保存修改';
+            addBtn.setAttribute('onclick', `saveContact(${index})`);
+            
+            // 添加取消按钮
+            if (!document.getElementById('cancelEditBtn')) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.id = 'cancelEditBtn';
+                cancelBtn.className = 'btn btn-warning';
+                cancelBtn.innerHTML = '❌ 取消';
+                cancelBtn.onclick = cancelEdit;
+                addBtn.parentNode.appendChild(cancelBtn);
+            }
+            
+            speak('请修改联系人信息');
+        }
+
+        function saveContact(index) {
+            const name = document.getElementById('contactName').value;
+            const fullPhone = document.getElementById('contactFullPhone').value;
+            const wechat = document.getElementById('contactWechat').value || '';
+            const qq = document.getElementById('contactQq').value || '';
+
+            if (name && fullPhone) {
+                if (!/^1[3-9]\d{9}$/.test(fullPhone)) {
+                    alert('请输入有效的11位手机号');
+                    return;
+                }
+                
+                const maskedPhone = fullPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+                
+                contacts[index] = { 
+                    ...contacts[index],
+                    name, 
+                    phone: maskedPhone, 
+                    fullPhone,
+                    wechatId: wechat,
+                    qqNumber: qq
+                };
+                
+                // 保存到localStorage
+                saveToStorage(STORAGE_KEYS.CONTACTS, contacts);
+                
+                updateContactList();
+                cancelEdit();
+                speak('联系人信息已更新');
+                addLog(`更新紧急联系人：${name}`);
+            } else {
+                alert('请填写完整的联系人信息');
+            }
+        }
+
+        function cancelEdit() {
+            document.getElementById('contactName').value = '';
+            document.getElementById('contactFullPhone').value = '';
+            document.getElementById('contactWechat').value = '';
+            document.getElementById('contactQq').value = '';
+            
+            const addBtn = document.querySelector('.btn-success[onclick^="saveContact"]');
+            if (addBtn) {
+                addBtn.innerHTML = '✅ 添加联系人';
+                addBtn.setAttribute('onclick', 'addContact()');
+            }
+            
+            const cancelBtn = document.getElementById('cancelEditBtn');
+            if (cancelBtn) {
+                cancelBtn.remove();
+            }
+        }
+
+        function setDefaultContact(index) {
+            const contact = contacts[index];
+            
+            if (contact.isDefault) {
+                // 如果已经是默认，取消默认
+                contact.isDefault = false;
+                updateContactList();
+                speak(`已取消${contact.name}的默认紧急联系人设置`);
+                addLog(`取消默认联系人：${contact.name}`);
+            } else {
+                // 检查当前默认联系人数量
+                const currentDefaultCount = contacts.filter(c => c.isDefault).length;
+                
+                if (currentDefaultCount >= MAX_DEFAULT_CONTACTS) {
+                    speak(`最多只能设置${MAX_DEFAULT_CONTACTS}个默认紧急联系人`);
+                    showToast(`⚠️ 最多只能设置${MAX_DEFAULT_CONTACTS}个默认联系人`);
+                    return;
+                }
+                
+                // 设置为默认
+                contact.isDefault = true;
+                updateContactList();
+                speak(`已将${contact.name}设为默认紧急联系人`);
+                addLog(`设为默认联系人：${contact.name}`);
+            }
+        }
+
+        function updateContactList() {
+            const contactList = document.getElementById('contactList');
+            contactList.innerHTML = '';
+            
+            // 显示默认联系人数量提示
+            const defaultCount = contacts.filter(c => c.isDefault).length;
+            const countInfo = document.createElement('div');
+            countInfo.style.cssText = 'padding: 10px 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px; color: #6c757d; font-size: 14px;';
+            countInfo.innerHTML = `📊 默认联系人：${defaultCount}/${MAX_DEFAULT_CONTACTS}（最多${MAX_DEFAULT_CONTACTS}个）`;
+            contactList.appendChild(countInfo);
+
+            contacts.forEach((contact, index) => {
+                const avatars = ['👨', '👩', '👴', '👵', '👦', '👧'];
+                const avatar = avatars[index % avatars.length];
+                const contactItem = document.createElement('div');
+                contactItem.className = 'contact-item';
+                contactItem.innerHTML = `
+                    <div class="contact-info">
+                        <div class="contact-avatar">${avatar}</div>
+                        <div>
+                            <strong>${contact.name} ${contact.isDefault ? '⭐' : ''}</strong><br>
+                            <span style="color: #7f8c8d;">${contact.phone} ${contact.isDefault ? '(默认)' : ''}</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" style="padding: 8px 15px; font-size: 14px;" onclick="editContact(${index})">✏️ 编辑</button>
+                        <button class="btn ${contact.isDefault ? 'btn-success' : 'btn-warning'}" style="padding: 8px 15px; font-size: 14px;" onclick="setDefaultContact(${index})">${contact.isDefault ? '⭐ 默认' : '🏆 设为默认'}</button>
+                        <button class="btn btn-danger" style="padding: 8px 15px; font-size: 14px;" onclick="removeContact(${index})">🗑️ 删除</button>
+                    </div>
+                `;
+                contactList.appendChild(contactItem);
+            });
+            
+            // 如果没有联系人，显示提示
+            if (contacts.length === 0) {
+                contactList.innerHTML = '<div style="text-align: center; padding: 30px; color: #7f8c8d;">暂无紧急联系人，请添加</div>';
+            }
+        }
+
+        function startNavigation() {
+            const destination = document.getElementById('destination').value.trim();
+            
+            if (!destination) {
+                alert('请输入目的地');
+                return;
+            }
+            
+            // 检查是否已经获取到位置
+            if (!currentPosition) {
+                alert('请先点击定位按钮获取当前位置');
+                speak('请先点击定位按钮获取当前位置');
+                return;
+            }
+            
+            if (typeof BMap === 'undefined') {
+                alert('地图服务未加载，请稍后重试');
+                return;
+            }
+            
+            speak(`开始规划前往${destination}的路线`);
+            addLog(`开始导航：${destination}`);
+            
+            // 使用百度地图进行路线规划
+            const localSearch = new BMap.LocalSearch(map, {
+                onSearchComplete: function(results) {
+                    if (localSearch.getStatus() === BMAP_STATUS_SUCCESS && results.getPoi(0)) {
+                        const destinationPoint = results.getPoi(0).point;
+                        const startPoint = new BMap.Point(currentPosition.lng, currentPosition.lat);
+                        
+                        // 创建驾车路线规划
+                        const drivingRoute = new BMap.DrivingRoute(map, {
+                            renderOptions: {
+                                map: map,
+                                autoViewport: true
+                            },
+                            onSearchComplete: function(routeResult) {
+                                if (drivingRoute.getStatus() === BMAP_STATUS_SUCCESS) {
+                                    const plan = routeResult.getPlan(0);
+                                    const steps = plan.getRouteSteps();
+                                    
+                                    if (steps.length > 0) {
+                                        // 显示导航选项
+                                        showNavigationOptions(destination, destinationPoint, steps);
+                                    } else {
+                                        handleNavigationError('未找到可用的导航路线');
+                                    }
+                                } else {
+                                    handleNavigationError('路线规划失败，请尝试其他目的地');
+                                }
+                            },
+                            onMarkersSet: function() {
+                                addLog('导航路线已显示在地图上');
+                            }
+                        });
+                        
+                        drivingRoute.search(startPoint, destinationPoint);
+                    } else {
+                        handleNavigationError('未找到该地点，请重新输入');
+                    }
+                }
+            });
+            
+            localSearch.search(destination);
+        }
+
+        // 显示导航选项
+        function showNavigationOptions(destination, destinationPoint, steps) {
+            const posInfo = document.getElementById('posInfo');
+            posInfo.innerHTML = `
+                <div style="padding: 15px; background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 12px; margin-bottom: 15px;">
+                    <h4 style="color: #2e7d32; margin-bottom: 10px;">📍 导航路线已规划</h4>
+                    <p style="color: #388e3c;">目的地：${destination}</p>
+                    <p style="color: #388e3c;">预计路线：${steps.length} 个导航点</p>
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="startWebNavigation('${destination}', ${destinationPoint.lng}, ${destinationPoint.lat})">🌐 网页导航</button>
+                    <button class="btn btn-warning" onclick="openBaiduMapApp('${destination}', ${destinationPoint.lng}, ${destinationPoint.lat})">📱 打开百度地图APP</button>
+                    <button class="btn" onclick="startSimulationNavigation('${destination}', ${JSON.stringify(steps)})">🎮 模拟导航演示</button>
+                </div>
+            `;
+            
+            speak(`导航路线已规划完成，共${steps.length}个导航点，您可以选择网页导航、打开百度地图APP或观看模拟演示`);
+            addLog(`导航路线规划完成：${steps.length}个导航点`);
+        }
+
+        // 网页端语音导航
+        function startWebNavigation(destination, destLng, destLat) {
+            speak(`开始网页导航到${destination}`);
+            addLog(`开始网页导航：${destination}`);
+            
+            // 获取当前位置并开始实时导航
+            navigator.geolocation.watchPosition(
+                function(position) {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    
+                    // 计算距离
+                    const distance = calculateDistance(currentLat, currentLng, destLat, destLng);
+                    
+                    if (distance < 50) {
+                        document.getElementById('posInfo').innerHTML = `<div style="color: #2e7d32; font-size: 18px;">✅ 已到达目的地：${destination}</div>`;
+                        speak(`已到达目的地${destination}`);
+                        addLog(`导航完成：${destination}`);
+                        navigator.geolocation.clearWatch(this);
+                    } else {
+                        // 获取方向和距离提示
+                        const direction = getDirection(currentLat, currentLng, destLat, destLng);
+                        document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px;">🧭 距离目的地约${Math.round(distance)}米，${direction}</div>`;
+                        
+                        if (distance < 200) {
+                            speak(`距离目的地还有${Math.round(distance)}米，${direction}`);
+                        }
+                    }
+                },
+                function(error) {
+                    console.error('导航定位失败:', error);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+            );
+        }
+
+        // 打开百度地图APP导航
+        function openBaiduMapApp(destination, destLng, destLat) {
+            // 构造百度地图APP URL Scheme
+            const bdPoint = convertToBaiduCoordinate(destLng, destLat);
+            
+            // 百度地图APP URL Scheme格式
+            const baiduMapUrl = `baidumap://map/direction?origin=我的位置&destination=latlng:${bdPoint.lat},${bdPoint.lng}|name:${encodeURIComponent(destination)}&mode=driving`;
+            
+            // 尝试打开百度地图APP
+            window.location.href = baiduMapUrl;
+            
+            // 备用方案：打开网页版百度地图
+            setTimeout(function() {
+                const webUrl = `https://map.baidu.com/direction?origin=我的位置&destination=latlng:${bdPoint.lat},${bdPoint.lng}|name:${encodeURIComponent(destination)}&mode=driving`;
+                window.open(webUrl, '_blank');
+            }, 1000);
+            
+            speak(`正在打开百度地图导航到${destination}`);
+            addLog(`打开百度地图APP导航到：${destination}`);
+        }
+
+        // 模拟导航演示（保留原有功能）
+        function startSimulationNavigation(destination, stepsJson) {
+            const steps = JSON.parse(stepsJson);
+            
+            speak(`开始模拟导航到${destination}`);
+            
+            let currentStep = 0;
+            document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px;">🧭 正在导航到：${destination}，${steps[currentStep].description}</div>`;
+            speak(steps[currentStep].description);
+            
+            const navInterval = setInterval(() => {
+                currentStep++;
+                if (currentStep < steps.length) {
+                    document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px;">🧭 正在导航到：${destination}，${steps[currentStep].description}</div>`;
+                    speak(steps[currentStep].description);
+                    addLog(`导航指令：${steps[currentStep].description}`);
+                } else {
+                    clearInterval(navInterval);
+                    document.getElementById('posInfo').innerHTML = `<div style="font-size: 18px; color: #2e7d32;">✅ 已到达目的地：${destination}</div>`;
+                    speak(`已到达目的地${destination}`);
+                    addLog(`导航完成：${destination}`);
+                }
+            }, 4000);
+        }
+
+        // 计算两点之间的距离（米）
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000; // 地球半径（米）
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // 获取方向提示
+        function getDirection(lat1, lng1, lat2, lng2) {
+            const dLng = lng2 - lng1;
+            const dLat = lat2 - lat1;
+            
+            const angle = Math.atan2(dLng, dLat) * 180 / Math.PI;
+            const normalizedAngle = (angle + 360) % 360;
+            
+            if (normalizedAngle >= 337.5 || normalizedAngle < 22.5) return '请向北前进';
+            if (normalizedAngle >= 22.5 && normalizedAngle < 67.5) return '请向东北前进';
+            if (normalizedAngle >= 67.5 && normalizedAngle < 112.5) return '请向东前进';
+            if (normalizedAngle >= 112.5 && normalizedAngle < 157.5) return '请向东南前进';
+            if (normalizedAngle >= 157.5 && normalizedAngle < 202.5) return '请向南前进';
+            if (normalizedAngle >= 202.5 && normalizedAngle < 247.5) return '请向西南前进';
+            if (normalizedAngle >= 247.5 && normalizedAngle < 292.5) return '请向西前进';
+            return '请向西北前进';
+        }
+
+        // 导航错误处理
+        function handleNavigationError(message) {
+            document.getElementById('posInfo').innerHTML = `<div style="color: #e74c3c; font-size: 17px;">⚠️ ${message}</div>`;
+            speak(message);
+            addLog(`导航失败：${message}`);
+        }
+
+        function drawTrajectory() {
+            const path = document.getElementById('trajectoryPath');
+            path.innerHTML = '';
+
+            const line = document.createElement('div');
+            line.style.position = 'absolute';
+            line.style.top = '20%';
+            line.style.left = '10%';
+            line.style.width = '80%';
+            line.style.height = '60%';
+            line.style.border = '4px solid #3498db';
+            line.style.borderRadius = '25px';
+            line.style.transform = 'rotate(15deg)';
+            line.style.zIndex = '1';
+            line.style.boxShadow = '0 0 20px rgba(52,152,219,0.6)';
+            path.appendChild(line);
+
+            const points = [
+                { top: '20%', left: '10%', label: '起点' },
+                { top: '40%', left: '30%', label: '途经点1' },
+                { top: '60%', left: '60%', label: '途经点2' },
+                { top: '80%', left: '90%', label: '终点' }
+            ];
+
+            points.forEach((point, index) => {
+                const waypoint = document.createElement('div');
+                waypoint.className = `waypoint ${index === 0 ? 'start' : index === points.length - 1 ? 'end' : ''}`;
+                waypoint.style.top = point.top;
+                waypoint.style.left = point.left;
+                waypoint.title = point.label;
+                path.appendChild(waypoint);
+            });
+        }
+
+        setInterval(() => {
+            if (isLoggedIn) {
+                document.getElementById('posInfo').innerText =
+                    '📍 当前位置：吉林省白城市白城师范学院 ' + new Date().toLocaleTimeString();
+            }
+        }, 4000);
+
+        function addSafeArea() {
+            const area = document.getElementById('safeArea').value;
+            if (area) {
+                speak(`已添加安全区域：${area}`);
+                addLog(`添加安全区域：${area}`);
+                document.getElementById('safeArea').value = '';
+            }
+        }
+
+        function testVoiceControl() {
+            speak('语音控制测试中，请说出指令');
+            addLog('测试语音控制');
+            setTimeout(() => {
+                speak('语音控制功能正常');
+            }, 3000);
+        }
+
+        function connectDevice() {
+            speak('正在连接设备');
+            addLog('重新连接设备');
+            setTimeout(() => {
+                speak('设备连接成功');
+            }, 2000);
+        }
+
+        let users = JSON.parse(localStorage.getItem('smartCaneUsers') || '[]');
+        let currentUserData = JSON.parse(localStorage.getItem('smartCaneCurrentUser') || 'null');
+
+        function showRegister() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('forgotPage').style.display = 'none';
+            document.getElementById('registerPage').style.display = 'block';
+            document.getElementById('registerError').style.display = 'none';
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('registerPage').style.display = 'none';
+            document.getElementById('forgotPage').style.display = 'block';
+            document.getElementById('forgotError').style.display = 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('registerPage').style.display = 'none';
+            document.getElementById('forgotPage').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function register() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const password2 = document.getElementById('regPassword2').value;
+            const errorDiv = document.getElementById('registerError');
+
+            if (!username || username.length < 3 || username.length > 16) {
+                errorDiv.textContent = '用户名需要3-16位';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!password || password.length < 6) {
+                errorDiv.textContent = '密码至少6位';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (password !== password2) {
+                errorDiv.textContent = '两次密码不一致';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const exists = users.find(u => u.username === username);
+            if (exists) {
+                errorDiv.textContent = '用户名已存在';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const newUser = {
+                username,
+                password,
+                regTime: new Date().toLocaleDateString(),
+                contacts: [{ name: '家人', phone: '138****8888' }],
+                settings: { volume: '高', mode: '户外模式', voice: true }
+            };
+            users.push(newUser);
+            localStorage.setItem('smartCaneUsers', JSON.stringify(users));
+
+            errorDiv.textContent = '';
+            errorDiv.style.display = 'none';
+            alert('注册成功！请登录');
+            showLogin();
+        }
+
+        function resetPassword() {
+            const username = document.getElementById('forgotUsername').value;
+            const password = document.getElementById('forgotPassword').value;
+            const errorDiv = document.getElementById('forgotError');
+
+            if (!username) {
+                errorDiv.textContent = '请输入用户名';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!password || password.length < 6) {
+                errorDiv.textContent = '密码至少6位';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const user = users.find(u => u.username === username);
+            if (!user) {
+                errorDiv.textContent = '用户不存在';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            user.password = password;
+            localStorage.setItem('smartCaneUsers', JSON.stringify(users));
+
+            errorDiv.textContent = '';
+            errorDiv.style.display = 'none';
+            alert('密码重置成功！请登录');
+            showLogin();
+        }
+
+        function showChangePassword() {
+            document.getElementById('changePasswordModal').style.display = 'flex';
+        }
+
+        function closeChangePassword() {
+            document.getElementById('changePasswordModal').style.display = 'none';
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('changePasswordError').style.display = 'none';
+        }
+
+        function confirmChangePassword() {
+            const oldPwd = document.getElementById('oldPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            const errorDiv = document.getElementById('changePasswordError');
+
+            if (!oldPwd) {
+                errorDiv.textContent = '请输入当前密码';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!newPwd || newPwd.length < 6) {
+                errorDiv.textContent = '新密码至少6位';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                errorDiv.textContent = '两次密码不一致';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (currentUserData && currentUserData.password !== oldPwd) {
+                errorDiv.textContent = '当前密码错误';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            currentUserData.password = newPwd;
+            localStorage.setItem('smartCaneCurrentUser', JSON.stringify(currentUserData));
+
+            const userIndex = users.findIndex(u => u.username === currentUserData.username);
+            if (userIndex >= 0) {
+                users[userIndex].password = newPwd;
+                localStorage.setItem('smartCaneUsers', JSON.stringify(users));
+            }
+
+            errorDiv.textContent = '';
+            errorDiv.style.display = 'none';
+            alert('密码修改成功！');
+            closeChangePassword();
+            speak('密码修改成功');
+        }
+
+        let hardwareConnected = false;
+
+        function connectHardware() {
+            const statusDiv = document.getElementById('hardwareStatus');
+            const infoDiv = document.getElementById('hardwareInfo');
+
+            speak('正在搜索附近设备');
+            statusDiv.innerHTML = '🟡 连接中...';
+
+            setTimeout(() => {
+                hardwareConnected = true;
+                statusDiv.innerHTML = '🟢 已连接';
+                statusDiv.className = 'status-indicator';
+                infoDiv.innerHTML = `
+                    <p><strong>设备名称：</strong>智能盲杖 Pro</p>
+                    <p><strong>设备ID：</strong>CB-2024-001</p>
+                    <p><strong>信号强度：</strong>强</p>
+                    <p><strong>最后同步：</strong>${new Date().toLocaleTimeString()}</p>
+                `;
+                speak('设备连接成功');
+                addLog('硬件设备已连接');
+            }, 2000);
+        }
+
+        function testHardwareSos() {
+            if (!hardwareConnected) {
+                alert('请先连接盲杖设备');
+                connectHardware();
+                return;
+            }
+
+            const result = document.getElementById('sosResult');
+            result.innerHTML = '<div class="card" style="background: linear-gradient(135deg, #fff5f5, #ffe0e0); border: 3px solid #ffcdd2;"><h3 style="color: #e74c3c;">📟 收到硬件SOS信号！</h3><p>触发时间：' + new Date().toLocaleString() + '</p><p>触发位置：白城师范学院</p><p>正在通知紧急联系人...</p></div>';
+            speak('收到硬件SOS报警，已通知紧急联系人');
+            addLog('硬件SOS报警触发');
+        }
+
+        window.onload = function() {
+            createParticles();
+            createStars();
+            initSpeechRecognition();
+            
+            // 延迟初始化地图，确保百度地图API已加载
+            setTimeout(function() {
+                if (typeof BMap !== 'undefined') {
+                    initBaiduMap();
+                    // 自动获取当前位置
+                    getCurrentLocation();
+                    // 启动实时位置监控
+                    startLocationWatch();
+                } else {
+                    console.error("百度地图API未加载");
+                    const posInfo = document.getElementById('posInfo');
+                    if (posInfo) {
+                        posInfo.innerHTML = '📍 地图API加载失败，请检查网络连接';
+                    }
+                }
+            }, 1000);
+            
+            if (currentUserData) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                isLoggedIn = true;
+                document.getElementById('currentUser').textContent = currentUserData.username;
+                document.getElementById('userDisplayName').textContent = currentUserData.username;
+                document.getElementById('userPhone').textContent = '未设置';
+            } else {
+                document.getElementById('loginPage').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                setTimeout(() => {
+                    guideLogin();
+                }, 1500);
+            }
+        };
+        // 百度地图相关变量
+        let map;
+        let currentMarker;
+        let navigationLine;
+        let currentPosition = null; // 不设置默认位置，等待实际定位
+        let watchId;
+        let isLocating = false; // 是否正在实时定位
+
+        // 导航相关变量
+        let navigationSteps = [];    // 存储导航步骤
+        let currentStepIndex = 0;    // 当前步骤索引
+        let isNavigating = false;   // 是否正在导航
+        let navigationWatchId = null; // 导航定位监视ID
+
+        // 计算两点之间的距离（米）
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000; // 地球半径（米）
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // 返回距离（米）
+        }
+
+        // 添加轨迹点
+        function addTrackPoint(lat, lng) {
+            const now = new Date();
+            const point = {
+                lat: lat,
+                lng: lng,
+                time: now.toLocaleTimeString(),
+                timestamp: now.getTime()
+            };
+            
+            // 只有当与上一个点距离超过10米时才记录
+            if (trackPoints.length > 0) {
+                const lastPoint = trackPoints[trackPoints.length - 1];
+                const distance = calculateDistance(lastPoint.lat, lastPoint.lng, lat, lng);
+                if (distance < 10) {
+                    return; // 距离太近，不记录
+                }
+                // 累计距离
+                totalDistance += distance;
+            } else {
+                // 第一个点，记录开始时间
+                walkingStartTime = now;
+            }
+            
+            trackPoints.push(point);
+            
+            // 保存到localStorage
+            saveToStorage(STORAGE_KEYS.TRACK, trackPoints);
+            saveToStorage(STORAGE_KEYS.TOTAL_DISTANCE, totalDistance);
+            
+            // 发送定位数据到后端服务器
+            sendLocationToServer(lat, lng);
+            
+            updateTrackDisplay();
+        }
+
+        // 发送定位数据到后端服务器
+        async function sendLocationToServer(lat, lng) {
+            try {
+                const userId = currentUserData?.username || 'admin';
+                const response = await fetch('http://localhost:3000/api/location/log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        lat: lat,
+                        lng: lng,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log('定位记录已发送到服务器');
+                }
+            } catch (e) {
+                // 服务器不可用时忽略错误，继续使用localStorage
+                console.log('服务器暂不可用，使用本地存储');
+            }
+        }
+
+        // 更新轨迹显示
+        function updateTrackDisplay() {
+            // 更新距离显示
+            const km = (totalDistance / 1000).toFixed(2);
+            document.getElementById('distanceWalked').textContent = km;
+            
+            // 更新步数（假设每步0.7米）
+            const steps = Math.round(totalDistance / 0.7);
+            document.getElementById('stepsCount').textContent = steps.toLocaleString();
+            
+            // 更新行走时间
+            if (walkingStartTime) {
+                const minutes = Math.round((new Date().getTime() - walkingStartTime.getTime()) / 60000);
+                document.getElementById('walkingTime').textContent = minutes;
+            }
+            
+            // 更新轨迹点列表
+            if (trackPoints.length > 0) {
+                let html = '';
+                trackPoints.forEach((p, i) => {
+                    html += `<div>[${p.time}] 纬度: ${p.lat.toFixed(6)}, 经度: ${p.lng.toFixed(6)}</div>`;
+                });
+                document.getElementById('trackPoints').innerHTML = html;
+            }
+            
+            // 更新轨迹地图
+            updateTrackMap();
+        }
+
+        // 更新轨迹地图
+        function updateTrackMap() {
+            if (typeof BMap !== 'undefined' && trackPoints.length > 1) {
+                if (!trackMap) {
+                    trackMap = new BMap.Map('trackMap');
+                    trackMap.enableScrollWheelZoom(true);
+                }
+                
+                // 创建轨迹点数组
+                const points = trackPoints.map(p => new BMap.Point(p.lng, p.lat));
+                
+                // 设置地图中心点
+                const center = points[Math.floor(points.length / 2)];
+                trackMap.centerAndZoom(center, 16);
+                
+                // 清除之前的覆盖物
+                trackMap.clearOverlays();
+                
+                // 添加轨迹线
+                const polyline = new BMap.Polyline(points, {
+                    strokeColor: '#667eea',
+                    strokeWeight: 3,
+                    strokeOpacity: 0.8
+                });
+                trackMap.addOverlay(polyline);
+                
+                // 添加起点和终点标记
+                if (points.length > 0) {
+                    const startMarker = new BMap.Marker(points[0]);
+                    const endMarker = new BMap.Marker(points[points.length - 1]);
+                    trackMap.addOverlay(startMarker);
+                    trackMap.addOverlay(endMarker);
+                    
+                    // 添加信息窗口
+                    const startInfo = new BMap.InfoWindow('起点');
+                    const endInfo = new BMap.InfoWindow('终点');
+                    startMarker.addEventListener('click', () => trackMap.openInfoWindow(startInfo, points[0]));
+                    endMarker.addEventListener('click', () => trackMap.openInfoWindow(endInfo, points[points.length - 1]));
+                }
+            }
+        }
+
+        // 重置轨迹记录
+        function resetTrack() {
+            trackPoints = [];
+            totalDistance = 0;
+            walkingStartTime = null;
+            
+            // 清除localStorage
+            localStorage.removeItem(STORAGE_KEYS.TRACK);
+            localStorage.removeItem(STORAGE_KEYS.TOTAL_DISTANCE);
+            
+            document.getElementById('distanceWalked').textContent = '0.00';
+            document.getElementById('stepsCount').textContent = '0';
+            document.getElementById('walkingTime').textContent = '0';
+            document.getElementById('trackPoints').innerHTML = '<p>点击导航页面的"获取当前位置"开始记录轨迹</p>';
+            if (trackMap) {
+                trackMap.clearOverlays();
+            }
+            
+            addLog('轨迹记录已重置');
+        }
+
+        // 获取转向描述（改进版）
+        function getDirectionDescription(description) {
+            if (!description) return '继续直行';
+            
+            // 优先检测明确的转向指令
+            if (description.includes('左转') || description.includes('左拐')) return '左转';
+            if (description.includes('右转') || description.includes('右拐')) return '右转';
+            if (description.includes('左掉头')) return '左掉头';
+            if (description.includes('右掉头')) return '右掉头';
+            if (description.includes('掉头')) return '掉头';
+            
+            // 检测方位词
+            if (description.includes('左') || description.includes('向西') || description.includes('向北')) return '左转';
+            if (description.includes('右') || description.includes('向东') || description.includes('向南')) return '右转';
+            
+            // 检测行驶方向
+            if (description.includes('直行') || description.includes('直走')) return '直行';
+            if (description.includes('进入') || description.includes('沿')) return '直行';
+            
+            // 默认继续直行
+            return '直行';
+        }
+
+        // 解析导航步骤
+        function parseNavigationSteps(plan) {
+            navigationSteps = [];
+            
+            // 获取路线方案
+            const route = plan.getRoute(0);
+            if (!route) {
+                addLog("未找到有效路线");
+                return;
+            }
+            
+            const steps = route.getSteps();
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                const description = step.getDescription();
+                const turnDirection = getDirectionDescription(description);
+                const distance = step.getDistance();
+                const point = step.getPoint();
+                
+                // 跳过直行的短距离步骤，避免过多播报
+                if (turnDirection === '直行' && distance < 50) {
+                    continue;
+                }
+                
+                navigationSteps.push({
+                    direction: turnDirection,
+                    description: description,
+                    distance: distance,
+                    point: point
+                });
+            }
+            
+            addLog(`路线解析完成，共${navigationSteps.length}个导航步骤`);
+            console.log("导航步骤：", navigationSteps);
+        }
+
+        // 计算方向（东南西北）
+        function getDirection(fromLat, fromLng, toLat, toLng) {
+            const dLng = toLng - fromLng;
+            const dLat = toLat - fromLat;
+            const angle = Math.atan2(dLng, dLat) * 180 / Math.PI;
+            
+            if (angle >= -22.5 && angle < 22.5) return '北';
+            if (angle >= 22.5 && angle < 67.5) return '东北';
+            if (angle >= 67.5 && angle < 112.5) return '东';
+            if (angle >= 112.5 && angle < 157.5) return '东南';
+            if (angle >= 157.5 || angle < -157.5) return '南';
+            if (angle >= -157.5 && angle < -112.5) return '西南';
+            if (angle >= -112.5 && angle < -67.5) return '西';
+            if (angle >= -67.5 && angle < -22.5) return '西北';
+            return '北';
+        }
+
+        // 计算方位角
+        function getBearing(fromLat, fromLng, toLat, toLng) {
+            const dLng = (toLng - fromLng) * Math.PI / 180;
+            const fromLatRad = fromLat * Math.PI / 180;
+            const toLatRad = toLat * Math.PI / 180;
+            
+            const y = Math.sin(dLng) * Math.cos(toLatRad);
+            const x = Math.cos(fromLatRad) * Math.sin(toLatRad) - 
+                      Math.sin(fromLatRad) * Math.cos(toLatRad) * Math.cos(dLng);
+            
+            let bearing = Math.atan2(y, x) * 180 / Math.PI;
+            return (bearing + 360) % 360;
+        }
+
+        // 实时播报导航指令（改进版）
+        function announceRealtimeNavigation(lat, lng) {
+            if (!isNavigating) return;
+            
+            const destination = document.getElementById('destination').value.trim();
+            
+            // 获取目的地坐标
+            if (navigationSteps.length === 0) {
+                return;
+            }
+            
+            const destPoint = navigationSteps[navigationSteps.length - 1].point;
+            if (!destPoint) {
+                return;
+            }
+            
+            // 计算到终点的距离
+            const totalDistance = calculateDistance(lat, lng, destPoint.lat, destPoint.lng);
+            
+            // 计算到终点的方向
+            const direction = getDirection(lat, lng, destPoint.lat, destPoint.lng);
+            
+            // 检查是否到达目的地（距离小于20米）
+            if (totalDistance < 20) {
+                document.getElementById('posInfo').innerHTML = `
+                    <div style="font-size: 17px; color: #27ae60;">
+                        <p>🎉 已到达目的地！</p>
+                        <p>📍 ${destination}</p>
+                    </div>
+                `;
+                speak("恭喜，您已到达目的地");
+                addLog("已到达目的地");
+                stopVoiceNavigation();
+                return;
+            }
+            
+            // 查找当前应该执行的导航步骤（找最近的转向点）
+            let nearestStepIndex = -1;
+            let nearestDist = Infinity;
+            
+            for (let i = currentStepIndex; i < navigationSteps.length; i++) {
+                const step = navigationSteps[i];
+                if (step.point) {
+                    const dist = calculateDistance(lat, lng, step.point.lat, step.point.lng);
+                    if (dist < nearestDist && dist < 200) {
+                        nearestDist = dist;
+                        nearestStepIndex = i;
+                    }
+                }
+            }
+            
+            // 更新当前步骤索引
+            if (nearestStepIndex >= 0 && nearestStepIndex > currentStepIndex) {
+                currentStepIndex = nearestStepIndex;
+            }
+            
+            // 获取当前步骤和下一个需要播报的步骤
+            let currentStep = navigationSteps[currentStepIndex];
+            let nextTurnStep = null;
+            
+            // 找到下一个需要播报的转向点（跳过直行）
+            for (let i = currentStepIndex + 1; i < navigationSteps.length; i++) {
+                if (navigationSteps[i].direction !== '直行') {
+                    nextTurnStep = navigationSteps[i];
+                    break;
+                }
+            }
+            
+            // 如果当前就是转向点，使用下一个
+            if (currentStep && currentStep.direction !== '直行') {
+                // 当前已经是转向点，需要找到下一个
+                for (let i = currentStepIndex + 1; i < navigationSteps.length; i++) {
+                    if (navigationSteps[i].direction !== '直行') {
+                        nextTurnStep = navigationSteps[i];
+                        break;
+                    }
+                }
+            } else if (!nextTurnStep) {
+                // 没有更多转向点了，使用最后一个步骤
+                nextTurnStep = navigationSteps[navigationSteps.length - 1];
+            }
+            
+            // 计算到下一个转向点的距离
+            let nextTurnDistance = totalDistance;
+            if (nextTurnStep && nextTurnStep.point) {
+                nextTurnDistance = calculateDistance(lat, lng, nextTurnStep.point.lat, nextTurnStep.point.lng);
+            }
+            
+            // 构建导航指令
+            let instruction = '';
+            let turnInstruction = '';
+            
+            if (currentStepIndex === 0 && nearestDist > 50) {
+                // 刚开始导航
+                instruction = `从当前位置出发，向${direction}方向行走，前往${destination}`;
+                turnInstruction = instruction;
+            } else if (nearestDist < 20 && nextTurnStep) {
+                // 已经到达当前转向点，准备下一个转向
+                if (nextTurnStep.direction !== '直行') {
+                    turnInstruction = `已${currentStep ? currentStep.direction : '直行'}，准备${nextTurnStep.direction}，${nextTurnStep.description}`;
+                }
+            } else if (nearestDist < 50 && nextTurnStep && nextTurnStep.direction !== '直行') {
+                // 接近转向点
+                turnInstruction = `前方${Math.round(nextTurnDistance)}米${nextTurnStep.direction}，${nextTurnStep.description}`;
+            } else if (nearestDist < 100 && nextTurnStep && nextTurnStep.direction !== '直行') {
+                // 即将到达转向点
+                instruction = `前方${Math.round(nextTurnDistance)}米${nextTurnStep.direction}`;
+            } else {
+                // 正常行驶中
+                instruction = `距离${destination}还有${totalDistance > 1000 ? (totalDistance / 1000).toFixed(1) + '公里' : Math.round(totalDistance) + '米'}`;
+            }
+            
+            // 添加红绿灯提示（模拟）
+            if (nearestDist < 30 && Math.random() > 0.5) {
+                instruction += '，前方有红绿灯，请注意';
+            }
+            
+            // 显示实时导航信息
+            let displayInstruction = currentStep ? currentStep.direction : '直行';
+            if (nextTurnStep && nextTurnStep.direction !== '直行') {
+                displayInstruction = `下一个：${nextTurnStep.direction}（${Math.round(nextTurnDistance)}米）`;
+            }
+            
+            document.getElementById('posInfo').innerHTML = `
+                <div style="font-size: 17px;">
+                    <p style="color: #e74c3c; font-weight: bold;">🧭 实时导航中</p>
+                    <p>📍 目的地：${destination}</p>
+                    <p>🚦 下个转向：<span style="color: #27ae60;">${displayInstruction}</span></p>
+                    <p>🛣️ 道路：${nextTurnStep ? nextTurnStep.description : ''}</p>
+                    <p>📏 到转向点：${Math.round(nextTurnDistance)}米</p>
+                    <p>🏁 到终点：${totalDistance > 1000 ? (totalDistance / 1000).toFixed(1) + '公里' : Math.round(totalDistance) + '米'}</p>
+                    <p style="color: #667eea; margin-top: 10px;">💬 ${turnInstruction || instruction}</p>
+                </div>
+            `;
+            
+            // 语音播报（只在关键节点播报）
+            if (turnInstruction) {
+                speak(turnInstruction);
+                addLog(`导航指令：${turnInstruction}`);
+            } else if (nearestDist < 100 && nextTurnStep && nextTurnStep.direction !== '直行') {
+                speak(instruction);
+                addLog(`导航提示：${instruction}`);
+            }
+        }
+
+        // 实时检查位置（替代原有的固定步骤检查）
+        function checkRealtimePosition(lat, lng) {
+            if (!isNavigating) return;
+            
+            // 记录轨迹
+            addTrackPoint(lat, lng);
+            
+            // 实时播报导航指令
+            announceRealtimeNavigation(lat, lng);
+            
+            // 在地图上显示当前位置
+            if (map) {
+                const bdPoint = convertToBaiduCoordinate(lng, lat);
+                const point = new BMap.Point(bdPoint.lng, bdPoint.lat);
+                addCurrentMarker(point);
+            }
+        }
+
+        // 停止语音导航
+        function stopVoiceNavigation() {
+            // 保存导航历史
+            if (navigationSteps.length > 0) {
+                const destination = document.getElementById('destination').value.trim();
+                const historyItem = {
+                    destination: destination,
+                    stepsCount: navigationSteps.length,
+                    timestamp: new Date().toLocaleString()
+                };
+                navigationHistory.push(historyItem);
+                saveToStorage(STORAGE_KEYS.NAVIGATION_HISTORY, navigationHistory);
+            }
+            
+            isNavigating = false;
+            navigationSteps = [];
+            currentStepIndex = 0;
+            
+            if (navigationWatchId) {
+                navigator.geolocation.clearWatch(navigationWatchId);
+                navigationWatchId = null;
+            }
+            
+            addLog("语音导航已停止");
+        }
+
+        // 取消导航
+        function cancelNavigation() {
+            // 停止语音导航
+            stopVoiceNavigation();
+            
+            // 清空地图上的路线
+            if (map) {
+                map.clearOverlays();
+                // 如果有当前位置，重新添加标记
+                if (currentPosition) {
+                    const point = new BMap.Point(currentPosition.lng, currentPosition.lat);
+                    addCurrentMarker(point);
+                }
+            }
+            
+            // 隐藏导航选项
+            const navOptions = document.getElementById('navigationOptions');
+            if (navOptions) {
+                navOptions.style.display = 'none';
+            }
+            
+            // 清空目的地输入
+            const destinationInput = document.getElementById('destination');
+            if (destinationInput) {
+                destinationInput.value = '';
+            }
+            
+            // 更新位置信息显示
+            const posInfo = document.getElementById('posInfo');
+            if (posInfo) {
+                posInfo.innerHTML = '📍 导航已取消';
+            }
+            
+            addLog("导航已取消");
+            speak("导航已取消");
+        }
+
+        // 初始化百度地图
+        function initBaiduMap() {
+            try {
+                // 创建地图实例
+                map = new BMap.Map("baiduMap");
+                
+                // 尝试加载保存的默认位置
+                const savedDefault = localStorage.getItem('defaultPosition');
+                if (savedDefault) {
+                    try {
+                        currentPosition = JSON.parse(savedDefault);
+                        addLog("已加载保存的默认位置");
+                    } catch (e) {
+                        console.log("无法解析保存的默认位置");
+                    }
+                }
+                
+                // 设置地图中心点和缩放级别
+                // 如果还没有获取到位置，先显示中国地图中心，但缩放级别为街道
+                let centerPoint;
+                if (currentPosition) {
+                    centerPoint = new BMap.Point(currentPosition.lng, currentPosition.lat);
+                    map.centerAndZoom(centerPoint, 18); // 街道级别
+                    
+                    // 获取地址信息
+                    getAddressInfo(currentPosition.lng, currentPosition.lat);
+                } else {
+                    // 默认显示中国地图中心，街道级别
+                    centerPoint = new BMap.Point(116.404, 39.915);
+                    map.centerAndZoom(centerPoint, 18); // 街道级别
+                    
+                    // 添加提示信息
+                    const posInfo = document.getElementById('posInfo');
+                    if (posInfo) {
+                        posInfo.innerHTML = '📍 请点击定位按钮获取当前位置';
+                    }
+                    
+                    // 启用滚轮缩放
+                    map.enableScrollWheelZoom(true);
+                    
+                    // 添加地图控件
+                    map.addControl(new BMap.NavigationControl());
+                    map.addControl(new BMap.ScaleControl());
+                    map.addControl(new BMap.OverviewMapControl());
+                    map.addControl(new BMap.MapTypeControl({
+                        mapTypes: [BMAP_NORMAL_MAP, BMAP_HYBRID_MAP]
+                    }));
+                    
+                    return; // 不添加标记，等待用户定位
+                }
+                
+                // 启用滚轮缩放
+                map.enableScrollWheelZoom(true);
+                
+                // 添加地图控件
+                map.addControl(new BMap.NavigationControl());
+                map.addControl(new BMap.ScaleControl());
+                map.addControl(new BMap.OverviewMapControl());
+                map.addControl(new BMap.MapTypeControl({
+                    mapTypes: [BMAP_NORMAL_MAP, BMAP_HYBRID_MAP]
+                }));
+                
+                // 添加当前位置标记
+                addCurrentMarker(centerPoint);
+                
+                console.log("百度地图初始化成功");
+                
+            } catch (error) {
+                console.error("百度地图初始化失败:", error);
+                document.getElementById('posInfo').innerHTML = '📍 地图加载失败，请检查网络连接';
+            }
+        }
+
+        // 添加当前位置标记 - 简化为单个红色标记
+        function addCurrentMarker(point) {
+            // 如果已存在标记，先移除
+            if (currentMarker) {
+                map.removeOverlay(currentMarker);
+            }
+            
+            // 创建红色标记图标
+            const iconSize = new BMap.Size(36, 36);
+            // 使用红色标记图标（百度地图默认红色标记）
+            const icon = new BMap.Icon("https://api.map.baidu.com/img/markers.png", iconSize, {
+                offset: new BMap.Size(18, 36),
+                imageOffset: new BMap.Size(-96, 0) // 选择红色标记
+            });
+            
+            // 创建标记
+            currentMarker = new BMap.Marker(point, {
+                icon: icon,
+                zIndex: 999
+            });
+            
+            // 创建信息窗口
+            const infoWindow = new BMap.InfoWindow("当前位置", {
+                width: 200,
+                height: 60,
+                title: "位置信息"
+            });
+            
+            // 添加点击事件
+            currentMarker.addEventListener("click", function() {
+                map.openInfoWindow(infoWindow, point);
+            });
+            
+            // 添加到地图
+            map.addOverlay(currentMarker);
+            
+            // 设置地图中心和缩放级别
+            map.setCenter(point);
+            map.setZoom(18);
+        }
+
+        // 获取当前位置（启动实时定位）
+        function getCurrentLocation() {
+            if (isLocating) {
+                // 如果已经在定位，则停止定位
+                stopLocationWatch();
+                return;
+            }
+
+            // 检查当前是否在地图页面，如果不在则先跳转到地图页面
+            const mapPage = document.getElementById('map');
+            if (!mapPage.classList.contains('active')) {
+                // 先跳转到地图页面
+                show('map');
+                // 等待页面切换完成后再执行定位
+                setTimeout(() => {
+                    performLocation();
+                }, 300);
+                return;
+            }
+
+            performLocation();
+        }
+
+        // 添加定位历史记录
+        function addLocationHistory(type, info) {
+            const historyItem = {
+                type: type,           // 'location' 或 'navigation'
+                info: info,           // 位置信息或目的地
+                timestamp: new Date().toLocaleString()
+            };
+            navigationHistory.push(historyItem);
+            saveToStorage(STORAGE_KEYS.NAVIGATION_HISTORY, navigationHistory);
+            // 最多保留50条历史记录
+            if (navigationHistory.length > 50) {
+                navigationHistory.shift();
+                saveToStorage(STORAGE_KEYS.NAVIGATION_HISTORY, navigationHistory);
+            }
+            // 更新历史记录显示
+            updateHistoryDisplay();
+        }
+
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            const logBox = document.getElementById('log');
+            if (logBox) {
+                // 清空日志框并重新添加导航历史
+                let historyHtml = '';
+                // 按时间倒序显示最近20条记录
+                const recentHistory = navigationHistory.slice(-20).reverse();
+                recentHistory.forEach(item => {
+                    const typeIcon = item.type === 'location' ? '📍' : '🧭';
+                    historyHtml += `<div>[${item.timestamp}] ${typeIcon} ${item.info}</div>`;
+                });
+                // 如果有历史记录，添加到日志开头
+                if (historyHtml) {
+                    // 保留原有日志的前几行
+                    const existingLogs = logBox.innerHTML;
+                    const logLines = existingLogs.split('</div>').filter(l => l.trim());
+                    const recentLogs = logLines.slice(-10).join('</div>') + (logLines.length > 10 ? '</div>' : '');
+                    logBox.innerHTML = historyHtml + (recentLogs ? recentLogs : '');
+                }
+            }
+        }
+
+        // 执行定位操作
+        function performLocation() {
+            if (isLocating) {
+                stopLocationWatch();
+                return;
+            }
+
+            if (navigator.geolocation) {
+                const posInfo = document.getElementById('posInfo');
+                if (posInfo) {
+                    posInfo.innerHTML = '📍 正在获取位置...';
+                }
+
+                // 清除之前的所有标记和路线
+                if (map) {
+                    map.clearOverlays();
+                }
+
+                // 启动实时位置监控
+                startLocationWatch();
+                
+                // 记录定位历史
+                addLocationHistory('location', '确认当前位置');
+            } else {
+                const posInfo = document.getElementById('posInfo');
+                if (posInfo) {
+                    posInfo.innerHTML = '📍 浏览器不支持地理定位';
+                }
+                addLog("浏览器不支持地理定位功能");
+            }
+        }
+
+        // 转换为百度地图坐标系
+        function convertToBaiduCoordinate(lng, lat) {
+            // 简单的坐标转换（实际项目中应使用更精确的转换算法）
+            const x_pi = 3.14159265358979324 * 3000.0 / 180.0;
+            const x = lng;
+            const y = lat;
+            const z = Math.sqrt(x * x + y * y) + 0.00002 * Math.sin(y * x_pi);
+            const theta = Math.atan2(y, x) + 0.000003 * Math.cos(x * x_pi);
+            
+            return {
+                lng: z * Math.cos(theta) + 0.0065,
+                lat: z * Math.sin(theta) + 0.006
+            };
+        }
+
+        // 获取地址信息
+        function getAddressInfo(lng, lat) {
+            const point = new BMap.Point(lng, lat);
+            const geocoder = new BMap.Geocoder();
+            
+            geocoder.getLocation(point, function(result) {
+                if (result) {
+                    const address = result.address;
+                    const formattedAddress = result.addressComponents;
+                    const fullAddress = `${formattedAddress.province}${formattedAddress.city}${formattedAddress.district}${formattedAddress.street}${formattedAddress.streetNumber}`;
+                    
+                    document.getElementById('posInfo').innerHTML = `当前位置：${fullAddress}`;
+                    addLog(`地址解析成功: ${fullAddress}`);
+                } else {
+                    document.getElementById('posInfo').innerHTML = `当前位置：纬度 ${lat.toFixed(6)}, 经度 ${lng.toFixed(6)}`;
+                }
+            });
+        }
+
+        // 放大地图
+        function zoomIn() {
+            map.zoomIn();
+        }
+
+        // 缩小地图
+        function zoomOut() {
+            map.zoomOut();
+        }
+
+        // 重置地图
+        function resetMap() {
+            if (!currentPosition) {
+                alert('请先点击定位按钮获取当前位置');
+                return;
+            }
+            const point = new BMap.Point(currentPosition.lng, currentPosition.lat);
+            map.centerAndZoom(point, 15);
+            addLog("地图已重置到当前位置");
+        }
+
+        // 开始导航
+        function startNavigation() {
+            // ========== 清空上次导航数据 ==========
+            // 停止之前的语音导航
+            stopVoiceNavigation();
+            
+            // 停止导航定位监控
+            if (navigationWatchId) {
+                navigator.geolocation.clearWatch(navigationWatchId);
+                navigationWatchId = null;
+            }
+            
+            // 清空所有导航相关数据
+            navigationSteps = [];
+            currentStepIndex = 0;
+            isNavigating = false;
+            
+            // 清空地图上的所有覆盖物
+            if (map) {
+                map.clearOverlays();
+            }
+            
+            // 清空导航选项区域
+            const navOptions = document.getElementById('navigationOptions');
+            if (navOptions) {
+                navOptions.style.display = 'none';
+            }
+            
+            const destination = document.getElementById('destination').value.trim();
+            
+            if (!destination) {
+                alert("请输入目的地！");
+                return;
+            }
+            
+            // 检查是否已经获取到位置
+            if (!currentPosition) {
+                alert('请先点击定位按钮获取当前位置');
+                return;
+            }
+            
+            if (!map) {
+                alert("地图未初始化，请稍后再试");
+                return;
+            }
+            
+            // 记录导航历史
+            addLocationHistory('navigation', `导航到：${destination}`);
+            
+            // 使用百度地图的本地搜索功能
+            const local = new BMap.LocalSearch(map, {
+                onSearchComplete: function(results) {
+                    if (local.getStatus() === BMAP_STATUS_SUCCESS) {
+                        const destinationPoint = results.getPoi(0).point;
+                        const currentPoint = new BMap.Point(currentPosition.lng, currentPosition.lat);
+                        
+                        // 创建导航路线
+                        const driving = new BMap.DrivingRoute(map, {
+                            renderOptions: {
+                                map: map,
+                                autoViewport: true,
+                                panel: 'result'
+                            },
+                            onSearchComplete: function(result) {
+                                if (driving.getStatus() === BMAP_STATUS_SUCCESS) {
+                                    addLog(`导航路线规划成功: 到 ${destination}`);
+                                    // 显示导航选项
+                                    document.getElementById('navigationOptions').style.display = 'block';
+                                    speak(`导航路线已规划完成，您可以选择打开百度地图APP、网页导航或观看模拟演示`);
+                                } else {
+                                    addLog("导航路线规划失败");
+                                }
+                            }
+                        });
+                        
+                        driving.search(currentPoint, destinationPoint);
+                    } else {
+                        alert("未找到目的地，请重新输入");
+                        addLog(`未找到目的地: ${destination}`);
+                    }
+                }
+            });
+            
+            local.search(destination);
+        }
+
+        // 打开百度地图APP导航
+        function openBaiduMapApp() {
+            const destination = document.getElementById('destination').value.trim();
+            if (!destination) {
+                alert("请先输入目的地");
+                return;
+            }
+            
+            // 检查是否已经获取到位置
+            if (!currentPosition) {
+                alert('请先点击定位按钮获取当前位置');
+                return;
+            }
+            
+            // 百度地图APP URL Scheme
+            const url = `baidumap://map/direction?origin=${currentPosition.lat},${currentPosition.lng}&destination=${encodeURIComponent(destination)}&mode=driving`;
+            window.location.href = url;
+            
+            addLog(`正在打开百度地图APP导航到：${destination}`);
+            speak(`正在打开百度地图导航到${destination}`);
+        }
+
+        // 网页端实时语音导航
+        function startWebNavigation() {
+            const destination = document.getElementById('destination').value.trim();
+            if (!destination) {
+                alert("请先输入目的地");
+                return;
+            }
+            
+            if (!map) {
+                alert("地图未初始化，请稍后重试");
+                return;
+            }
+            
+            // ========== 清空上次导航数据 ==========
+            // 停止之前的导航
+            stopVoiceNavigation();
+            
+            // 清空所有导航相关数据
+            navigationSteps = [];
+            currentStepIndex = 0;
+            isNavigating = false;
+            
+            // 清空地图上的所有覆盖物
+            map.clearOverlays();
+            
+            // 清空定位信息
+            document.getElementById('posInfo').innerHTML = '';
+            
+            // 清空轨迹数据
+            trackPoints = [];
+            totalDistance = 0;
+            
+            addLog(`开始语音导航到：${destination}`);
+            speak(`正在规划前往${destination}的路线，请稍候`);
+            
+            document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px; color: #f39c12;">🧭 正在规划路线...</div>`;
+            
+            // 使用百度地图进行路线规划
+            const driving = new BMap.DrivingRoute(map, {
+                renderOptions: { map: map, autoViewport: true },
+                onSearchComplete: function(results) {
+                    if (driving.getStatus() === BMAP_STATUS_SUCCESS) {
+                        // 获取路线方案
+                        const plan = results.getPlan(0);
+                        if (plan) {
+                            // 解析路线步骤
+                            parseNavigationSteps(plan);
+                            
+                            // 开始语音导航
+                            startVoiceNavigation(destination);
+                        }
+                    } else {
+                        document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px; color: #e74c3c;">❌ 路线规划失败，请重试</div>`;
+                        speak("路线规划失败，请检查目的地是否正确");
+                        addLog("语音导航路线规划失败");
+                    }
+                }
+            });
+            
+            // 获取当前位置作为起点
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        currentPosition = { lng: lng, lat: lat };
+                        const bdPoint = convertToBaiduCoordinate(lng, lat);
+                        const startPoint = new BMap.Point(bdPoint.lng, bdPoint.lat);
+                        
+                        // 搜索路线
+                        driving.search(startPoint, destination);
+                    },
+                    function(error) {
+                        // 无法获取位置，提示用户
+                        document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px; color: #e74c3c;">❌ 无法获取当前位置，请检查定位权限</div>`;
+                        speak("无法获取当前位置，请检查定位权限设置");
+                        addLog("语音导航：无法获取当前位置");
+                    }
+                );
+            } else {
+                document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px; color: #e74c3c;">❌ 浏览器不支持地理定位</div>`;
+                speak("您的浏览器不支持地理定位功能");
+                addLog("语音导航：浏览器不支持地理定位");
+            }
+        }
+
+        // 开始语音导航
+        function startVoiceNavigation(destination) {
+            if (navigationSteps.length === 0) {
+                document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px; color: #e74c3c;">❌ 未找到可行路线</div>`;
+                speak("未找到可行路线，请尝试其他目的地");
+                return;
+            }
+            
+            isNavigating = true;
+            currentStepIndex = 0;
+            
+            // 显示导航状态
+            document.getElementById('posInfo').innerHTML = `
+                <div style="font-size: 17px; color: #27ae60;">
+                    <p>🧭 正在实时语音导航到：${destination}</p>
+                    <p style="color: #f39c12;">实时计算方向和距离，请注意听取语音导航指令</p>
+                </div>
+            `;
+            
+            addLog(`开始实时语音导航，共${navigationSteps.length}个步骤`);
+            speak(`实时语音导航开始，系统将根据您的位置实时计算导航指令`);
+            
+            // 启动GPS监控
+            startNavigationWatch();
+        }
+
+        // 启动导航GPS监控
+        function startNavigationWatch() {
+            if (navigator.geolocation) {
+                // 如果已有监控，先停止
+                if (navigationWatchId) {
+                    navigator.geolocation.clearWatch(navigationWatchId);
+                }
+                
+                navigationWatchId = navigator.geolocation.watchPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        currentPosition = { lng: lng, lat: lat };
+                        
+                        // 实时检查位置并播报导航指令
+                        checkRealtimePosition(lat, lng);
+                    },
+                    function(error) {
+                        console.error("导航定位失败:", error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+                
+                addLog("导航GPS监控已启动");
+            }
+        }
+
+        // 模拟导航演示
+        function startSimulationNavigation() {
+            // ========== 清空上次导航数据 ==========
+            // 停止之前的语音导航
+            stopVoiceNavigation();
+            
+            // 停止导航定位监控
+            if (navigationWatchId) {
+                navigator.geolocation.clearWatch(navigationWatchId);
+                navigationWatchId = null;
+            }
+            
+            // 清空所有导航相关数据
+            navigationSteps = [];
+            currentStepIndex = 0;
+            isNavigating = false;
+            
+            // 清空地图上的所有覆盖物
+            if (map) {
+                map.clearOverlays();
+            }
+            
+            const destination = document.getElementById('destination').value.trim();
+            if (!destination) {
+                alert("请先输入目的地");
+                return;
+            }
+            
+            addLog(`开始模拟导航到：${destination}`);
+            speak(`开始模拟导航到${destination}`);
+            
+            const steps = [
+                { description: '从当前位置出发，直行100米' },
+                { description: '前方路口右转' },
+                { description: '继续直行200米' },
+                { description: '到达目的地附近' }
+            ];
+            
+            let currentStep = 0;
+            document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px;">🧭 正在导航到：${destination}，${steps[currentStep].description}</div>`;
+            
+            const interval = setInterval(() => {
+                currentStep++;
+                if (currentStep >= steps.length) {
+                    clearInterval(interval);
+                    document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px; color: #27ae60;">🎉 导航完成！已到达${destination}</div>`;
+                    addLog(`导航完成：${destination}`);
+                    speak(`导航完成，已到达${destination}`);
+                } else {
+                    document.getElementById('posInfo').innerHTML = `<div style="font-size: 17px;">🧭 正在导航到：${destination}，${steps[currentStep].description}</div>`;
+                    addLog(`导航指令：${steps[currentStep].description}`);
+                }
+            }, 3000);
+        }
+
+        // 开始实时位置监控
+        function startLocationWatch() {
+            if (navigator.geolocation) {
+                isLocating = true;
+                // 更新定位按钮状态
+                updateLocationButton();
+
+                watchId = navigator.geolocation.watchPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        currentPosition = { lng: lng, lat: lat };
+
+                        // 自动保存为默认位置（起点）
+                        const defaultPos = { lng: lng, lat: lat };
+                        localStorage.setItem('defaultPosition', JSON.stringify(defaultPos));
+
+                        // 记录轨迹点
+                        addTrackPoint(lat, lng);
+
+                        // 转换为百度地图坐标系
+                        const bdPoint = convertToBaiduCoordinate(lng, lat);
+                        const point = new BMap.Point(bdPoint.lng, bdPoint.lat);
+
+                        // 更新地图标记和中心（addCurrentMarker会自动设置街道级别缩放）
+                        addCurrentMarker(point);
+
+                        // 获取地址信息
+                        getAddressInfo(bdPoint.lng, bdPoint.lat);
+                    },
+                    function(error) {
+                        console.error("位置监控失败:", error);
+                        let errorMsg = "位置监控失败";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = "用户拒绝了位置请求";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = "位置信息不可用";
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = "请求超时";
+                                break;
+                        }
+                        document.getElementById('posInfo').innerHTML = '📍 ' + errorMsg;
+                        addLog(`位置监控失败: ${errorMsg}`);
+                        stopLocationWatch();
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0,
+                        distanceFilter: 5 // 当位置移动超过5米时更新
+                    }
+                );
+
+                addLog("实时位置监控已启动");
+            }
+        }
+
+        // 停止位置监控
+        function stopLocationWatch() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                isLocating = false;
+                // 更新定位按钮状态
+                updateLocationButton();
+                addLog("实时位置监控已停止");
+            }
+        }
+
+        // 更新定位按钮状态
+        function updateLocationButton() {
+            const locationBtn = document.querySelector('.map-controls button[onclick="getCurrentLocation()"]');
+            if (locationBtn) {
+                if (isLocating) {
+                    locationBtn.textContent = '⏹️';
+                    locationBtn.title = '停止实时定位';
+                    locationBtn.style.backgroundColor = '#e74c3c';
+                } else {
+                    locationBtn.textContent = '📍';
+                    locationBtn.title = '获取当前位置';
+                    locationBtn.style.backgroundColor = '';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
