@@ -1,192 +1,139 @@
-from libs.PipeLine import PipeLine
-from libs.AIBase import AIBase
-from libs.AI2D import Ai2d
-from libs.Utils import *
-import os, sys, ujson, gc, math
+# 立创·庐山派-K230-CanMV开发板颜色识别
+# 检测黄色返回k1，检测斑马线条纹返回k2
+
+import time, os, sys
+
+from media.sensor import *
+from media.display import *
 from media.media import *
-import nncase_runtime as nn
-import ulab.numpy as np
-import image
-import aidemo
 from machine import UART
 from machine import FPIOA
-from machine import PWM
-import time
 
+sensor_id = 2
+sensor = None
+uart = None
 
-OBSTACLE_CLASSES = ["person", "bicycle", "car", "motorcycle", "bus", "train", "truck"]
-# 危险等级阈值（检测框面积占比，越大越近）
-DANGER_FAR = 0.05    # 远距离：缓慢提醒
-DANGER_MID = 0.15    # 中距离：中等提醒
-DANGER_NEAR = 0.3    # 近距离：紧急提醒
+DISPLAY_MODE = "VIRT"
+DISPLAY_WIDTH = 640
+DISPLAY_HEIGHT = 480
 
-# 全局初始化蜂鸣器
-beep_io = FPIOA()
-beep_io.set_function(43, FPIOA.PWM1)
-beep_pwm = PWM(1)
-beep_pwm.freq(4000)
-beep_pwm.duty_u16(0)
+YELLOW_THRESHOLD = [(25, 90, -10, 20, 30, 70)]
+WHITE_THRESHOLD = [(70, 100, -10, 10, -10, 10)]
+GRAY_THRESHOLD = [(30, 70, -5, 5, -5, 5)]
 
-last_beep_time = 0
+fpioa = FPIOA()
+fpioa.set_function(5, FPIOA.UART2_TXD)
+fpioa.set_function(6, FPIOA.UART2_RXD)
 
-# Custom YOLOv8 object detection class
-class ObjectDetectionApp(AIBase):
-    def __init__(self, kmodel_path, labels, model_input_size, max_boxes_num, confidence_threshold=0.5, nms_threshold=0.2, rgb888p_size=[224,224], display_size=[1920,1080], debug_mode=0):
-        super().__init__(kmodel_path, model_input_size, rgb888p_size, debug_mode)
-        self.kmodel_path = kmodel_path
-        self.labels = labels
-        self.model_input_size = model_input_size
-        self.confidence_threshold = confidence_threshold
-        self.nms_threshold = nms_threshold
-        self.max_boxes_num = max_boxes_num
+try:
+    uart = UART(UART.UART2, baudrate=9600, bits=UART.EIGHTBITS, parity=UART.PARITY_NONE, stop=UART.STOPBITS_ONE)
 
-        self.rgb888p_size = [ALIGN_UP(rgb888p_size[0], 16), rgb888p_size[1]]
-        self.display_size = [ALIGN_UP(display_size[0], 16), display_size[1]]
-        self.debug_mode = debug_mode
-        self.color_four = get_colors(len(self.labels))
-        self.x_factor = float(self.rgb888p_size[0]) / self.model_input_size[0]
-        self.y_factor = float(self.rgb888p_size[1]) / self.model_input_size[1]
+    print("UART initialized on UART2 @ 9600")
 
-        self.ai2d = Ai2d(debug_mode)
-        self.ai2d.set_ai2d_dtype(nn.ai2d_format.NCHW_FMT, nn.ai2d_format.NCHW_FMT, np.uint8, np.uint8)
+    sensor = Sensor(id=sensor_id)
+    sensor.reset()
+    sensor.set_framesize(width=DISPLAY_WIDTH, height=DISPLAY_HEIGHT, chn=CAM_CHN_ID_0)
+    sensor.set_pixformat(Sensor.RGB565, chn=CAM_CHN_ID_0)
+    Display.init(Display.VIRT, width=DISPLAY_WIDTH, height=DISPLAY_HEIGHT, fps=30)
+    MediaManager.init()
+    sensor.run()
 
-        # UART（可选，用于数据传输）
-        self.fpioa = FPIOA()
-        self.fpioa.set_function(3, self.fpioa.UART1_TXD, ie=1, oe=1)
-        self.fpioa.set_function(4, self.fpioa.UART1_RXD, ie=1, oe=1)
-        self.uart = UART(UART.UART1, baudrate=115200, bits=UART.EIGHTBITS, parity=UART.PARITY_NONE, stop=UART.STOPBITS_ONE)
+    last_send_time = 0
+    last_result = None
+    zebra_confirm_count = 0
 
-    def config_preprocess(self, input_image_size=None):
-        with ScopedTiming("set preprocess config", self.debug_mode > 0):
-            ai2d_input_size = input_image_size if input_image_size else self.rgb888p_size
-            top, bottom, left, right, self.scale = letterbox_pad_param(self.rgb888p_size, self.model_input_size)
-            self.ai2d.pad([0,0,0,0,top,bottom,left,right], 0, [128,128,128])
-            self.ai2d.resize(nn.interp_method.tf_bilinear, nn.interp_mode.half_pixel)
-            self.ai2d.build([1,3,ai2d_input_size[1],ai2d_input_size[0]], [1,3,self.model_input_size[1],self.model_input_size[0]])
-
-    def preprocess(self, input_np):
-        return [nn.from_numpy(input_np)]
-
-    def postprocess(self, results):
-        new_result = results[0][0].transpose()
-        det_res = aidemo.yolov8_det_postprocess(
-            new_result.copy(),
-            [self.rgb888p_size[1], self.rgb888p_size[0]],
-            [self.model_input_size[1], self.model_input_size[0]],
-            [self.display_size[1], self.display_size[0]],
-            len(self.labels),
-            self.confidence_threshold,
-            self.nms_threshold,
-            self.max_boxes_num
-        )
-        return det_res
-
-    def draw_result(self, pl, dets):
-        global beep_pwm, last_beep_time
-
-        max_danger = 0  # 记录最高危险等级
-        pl.osd_img.clear()
-
-        if dets and len(dets[0]) > 0:
-            for i in range(len(dets[0])):
-                label_idx = dets[1][i]
-                label_name = self.labels[label_idx]
-
-                # 只处理避障关键类别
-                if label_name not in OBSTACLE_CLASSES:
-                    continue
-
-                x, y, w, h = map(lambda x: int(round(x, 0)), dets[0][i])
-                conf = round(dets[2][i], 2)
-
-                # 计算检测框面积占比（粗略判断距离）
-                box_area = w * h
-                screen_area = self.display_size[0] * self.display_size[1]
-                area_ratio = box_area / screen_area
-
-                # 确定危险等级
-                danger_level = 0
-                if area_ratio > DANGER_NEAR:
-                    danger_level = 3  # 近距离：紧急
-                elif area_ratio > DANGER_MID:
-                    danger_level = 2  # 中距离：中等
-                elif area_ratio > DANGER_FAR:
-                    danger_level = 1  # 远距离：缓慢
-
-                max_danger = max(max_danger, danger_level)
-
-                # 绘制检测框和信息
-                color = (255,0,0) if danger_level >=2 else (0,255,0) if danger_level ==1 else (255,255,0)
-                pl.osd_img.draw_rectangle(x, y, w, h, color=color, thickness=4)
-                pl.osd_img.draw_string_advanced(x, y-50, 32, f"{label_name} {conf} Lv{danger_level}", color=color)
-
-        # 根据最高危险等级控制蜂鸣器
-        now = time.ticks_ms()
-        if max_danger == 0:
-            # 安全：不响
-            beep_pwm.duty_u16(0)
-        elif max_danger == 1 and now - last_beep_time > 1500:
-            # 远距离：滴一声，间隔1.5秒
-            beep_pwm.duty_u16(32768)
-            time.sleep_ms(80)
-            beep_pwm.duty_u16(0)
-            last_beep_time = now
-        elif max_danger == 2 and now - last_beep_time > 800:
-            # 中距离：滴一声，间隔0.8秒
-            beep_pwm.duty_u16(32768)
-            time.sleep_ms(100)
-            beep_pwm.duty_u16(0)
-            last_beep_time = now
-        elif max_danger == 3 and now - last_beep_time > 300:
-            # 近距离：急促滴滴滴
-            beep_pwm.duty_u16(32768)
-            time.sleep_ms(150)
-            beep_pwm.duty_u16(0)
-            last_beep_time = now
-
-if __name__ == "__main__":
-    display_mode = "lcd"
-    rgb888p_size = [224, 224]
-    kmodel_path = "/sdcard/examples/kmodel/yolov8n_224.kmodel"
-
-    # COCO数据集标签
-    labels = ["person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
-              "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
-              "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack",
-              "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball",
-              "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket",
-              "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-              "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair",
-              "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote",
-              "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book",
-              "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
-
-    # 较高置信度，减少误报
-    confidence_threshold = 0.6
-    nms_threshold = 0.4
-    max_boxes_num = 10  # 减少同时处理的目标数，提高效率
-
-    pl = PipeLine(rgb888p_size=rgb888p_size, display_mode=display_mode)
-    pl.create()
-    display_size = pl.get_display_size()
-
-    ob_det = ObjectDetectionApp(
-        kmodel_path,
-        labels=labels,
-        model_input_size=[224,224],
-        max_boxes_num=max_boxes_num,
-        confidence_threshold=confidence_threshold,
-        nms_threshold=nms_threshold,
-        rgb888p_size=rgb888p_size,
-        display_size=display_size,
-        debug_mode=0
-    )
-    ob_det.config_preprocess()
+    print("K230 Color Detection Started")
+    print("Detecting yellow(k1) and zebra(k2)...")
 
     while True:
-        with ScopedTiming("total", 1):
-            img = pl.get_frame()
-            res = ob_det.run(img)
-            ob_det.draw_result(pl, res)
-            pl.show_image()
-            gc.collect()
+        os.exitpoint()
+        img = sensor.snapshot(chn=CAM_CHN_ID_0)
+
+        yellow_detected = False
+        zebra_detected = False
+
+        yellow_blobs = img.find_blobs(YELLOW_THRESHOLD, area_threshold=200)
+        if yellow_blobs:
+            largest = max(yellow_blobs, key=lambda b: b[2]*b[3])
+            area = largest[2] * largest[3]
+            min_area = (DISPLAY_WIDTH * DISPLAY_HEIGHT) * 0.025
+            if area > min_area:
+                img.draw_rectangle(largest[0:4], color=(255, 0, 0))
+                img.draw_cross(largest[5], largest[6], color=(255, 0, 0))
+                yellow_detected = True
+                zebra_confirm_count = 0
+
+        if not yellow_detected:
+            white_blobs = img.find_blobs(WHITE_THRESHOLD, area_threshold=150)
+            gray_blobs = img.find_blobs(GRAY_THRESHOLD, area_threshold=150)
+
+            white_count = len(white_blobs)
+            gray_count = len(gray_blobs)
+
+            has_stripes = False
+            if white_count >= 2 and gray_count >= 2:
+                white_total = sum(b[2]*b[3] for b in white_blobs)
+                gray_total = sum(b[2]*b[3] for b in gray_blobs)
+                total = DISPLAY_WIDTH * DISPLAY_HEIGHT
+
+                white_ratio = white_total / total
+                gray_ratio = gray_total / total
+
+                if white_ratio >= 0.05 and gray_ratio >= 0.05:
+                    avg_width = []
+                    for blob in white_blobs:
+                        avg_width.append(blob[2])
+                    for blob in gray_blobs:
+                        avg_width.append(blob[2])
+
+                    if avg_width:
+                        mean_width = sum(avg_width) / len(avg_width)
+                        if mean_width < DISPLAY_WIDTH * 0.8:
+                            stripe_count = white_count + gray_count
+                            if stripe_count >= 4:
+                                has_stripes = True
+
+                if has_stripes:
+                    zebra_confirm_count += 1
+                    if zebra_confirm_count >= 2:
+                        for blob in white_blobs:
+                            img.draw_rectangle(blob[0:4], color=(255, 255, 255))
+                        for blob in gray_blobs:
+                            img.draw_rectangle(blob[0:4], color=(128, 128, 128))
+                        zebra_detected = True
+                else:
+                    zebra_confirm_count = 0
+            else:
+                zebra_confirm_count = 0
+
+        current_time = time.ticks_ms()
+        if current_time - last_send_time > 1000:
+            if yellow_detected:
+                result = "k1"
+            elif zebra_detected:
+                result = "k2"
+            else:
+                result = "none"
+
+            if result != last_result:
+                if result == "k1" or result == "k2":
+                    uart.write(result.encode() + b'\n')
+                    print(f"Sent via UART: {result}")
+                    print(result)
+                last_result = result
+
+            last_send_time = current_time
+
+        Display.show_image(img)
+
+except KeyboardInterrupt as e:
+    print("用户停止: ", e)
+except BaseException as e:
+    print(f"异常: {e}")
+finally:
+    if isinstance(sensor, Sensor):
+        sensor.stop()
+    Display.deinit()
+    os.exitpoint(os.EXITPOINT_ENABLE_SLEEP)
+    time.sleep_ms(100)
+    MediaManager.deinit()
